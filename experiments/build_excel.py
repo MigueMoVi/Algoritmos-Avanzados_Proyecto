@@ -1,8 +1,8 @@
-"""Genera el Excel actualizado de la Entrega 1 a partir del Excel original,
-las instancias corregidas y los resultados de run_experiments.py.
+"""Genera el Excel de la Entrega 1 a partir del Excel del proyecto (35 rutas),
+el modelo de tráfico y los resultados de run_experiments.py (LS y LPT).
 
     python experiments/build_excel.py
-Salida: results/Tabla_37_Empresas_Entrega1_Trafico.xlsx
+Salida: results/Tabla_35_Rutas_Entrega1.xlsx
 """
 
 from __future__ import annotations
@@ -16,18 +16,17 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import openpyxl  # noqa: E402
 import pandas as pd  # noqa: E402
-from openpyxl.comments import Comment  # noqa: E402
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side  # noqa: E402
 from openpyxl.utils import get_column_letter  # noqa: E402
 
-from sched.algorithms import branch_and_bound, list_scheduling, lpt  # noqa: E402
-from sched.algorithms.cpsat import cpsat_solve  # noqa: E402
+from sched.algorithms import list_scheduling, lpt  # noqa: E402
 from sched.builder import from_excel, manual_instance  # noqa: E402
+from sched.metrics import lower_bound  # noqa: E402
 from sched.timeutil import min_to_hhmm  # noqa: E402
 from sched.traffic import RAW_BANDS, get_profile  # noqa: E402
 
-SRC = ROOT / "data" / "raw" / "tabla_37_empresas.xlsx"
-OUT = ROOT / "results" / "Tabla_37_Empresas_Entrega1_Trafico.xlsx"
+SRC = ROOT / "data" / "raw" / "tabla_proyecto_35_rutas.xlsx"
+OUT = ROOT / "results" / "Tabla_35_Rutas_Entrega1.xlsx"
 RES = ROOT / "results"
 
 HDR_FILL = PatternFill("solid", fgColor="1F4E78")
@@ -62,57 +61,6 @@ def t(hhmm: str) -> float:
 
 
 # ====================================================================
-def sheet_trabajos(wb, insts):
-    """Reescribe 'Trabajos y ventanas' con RTU-28 / RTU-29 corregidas."""
-    ws = wb["Trabajos y ventanas"]
-    hdr = [c.value for c in ws[1]]
-    styles = [copy(c._style) for c in ws[2]]
-    orig = {}
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        if row[0]:
-            orig.setdefault(row[1], []).append(row)
-    ws.delete_rows(2, ws.max_row)
-    r = 2
-    by = {i.route: i for i in insts}
-    for route in orig:
-        inst = by[route]
-        if "control_datos" in inst.meta:
-            for j in inst.jobs:
-                nom = j.nominal
-                per = ("06:00–09:00" if nom < 540 else "09:00–16:00" if nom < 960
-                       else "16:00–19:00" if nom < 1140 else "19:00–22:00")
-                vals = [j.id, route, inst.company, f"{route}-B1...B{inst.m}",
-                        round(j.base / 60, 2), per, min_to_hhmm(nom), min_to_hhmm(j.r),
-                        min_to_hhmm(j.d), int(round(j.d - j.r)),
-                        "06:00–22:00 (2 h almuerzo escalonado)",
-                        "Ventana experimental según la política de ventanas del proyecto; "
-                        "vueltas generadas a partir de 'Parametros del modelo'"]
-                for k, v in enumerate(vals):
-                    c = ws.cell(row=r, column=k + 1, value=v)
-                    c._style = copy(styles[k])
-                r += 1
-        else:
-            for row in orig[route]:
-                for k, v in enumerate(row):
-                    if k == 11 and isinstance(v, str):
-                        v = v.replace("según Opción C", "según la política de ventanas del proyecto")
-                    ws.cell(row=r, column=k + 1, value=v)._style = copy(styles[k])
-                r += 1
-    ws.auto_filter.ref = f"A1:{get_column_letter(len(hdr))}{r - 1}"
-
-
-def flag_source(wb):
-    ws = wb["Tabla proyecto"]
-    for row in ws.iter_rows(min_row=2):
-        if row[0].value in ("RTU-28", "RTU-29"):
-            for idx in (9, 10, 11):          # demanda/h, viajes por unidad, frecuencia requerida
-                row[idx].fill = FLAG
-            row[10].comment = Comment(
-                "Control de datos: valor atípico frente al resto de rutas. El modelo no usa esta "
-                "celda; toma la demanda y los viajes planificados de la hoja "
-                "'Parametros del modelo' (145 y 139 vueltas).", "Grupo 4")
-
-
 # ====================================================================
 def sheet_perfil(wb):
     ws = wb.create_sheet("Perfil trafico")
@@ -270,62 +218,52 @@ def sheet_manual(wb):
     ws = wb.create_sheet("Instancia manual")
     inst = manual_instance()
     t2 = get_profile("T2")
-    ws["A1"] = "INSTANCIA MANUAL – 3 buses, 8 vueltas, base 90 min, tráfico T2"
+    ws["A1"] = "INSTANCIA MANUAL – 3 buses, 8 vueltas, duración base 90 min, tráfico T2"
     ws["A1"].font = TITLE
-    ws["A2"] = ("Ruta didáctica derivada de RTI-08 (tiempo de vuelta redondeado a 90 min). "
-                "Almuerzo 2 h: B1 inicia 10:30–11:30, B2 12:00–13:00, B3 13:30–14:30.")
+    ws["A2"] = ("Almuerzo de 2 h: B1 inicia entre 10:30 y 11:30, B2 entre 12:00 y 13:00, B3 entre "
+                "13:30 y 14:30. Asignaciones producidas por el programa (python -m sched demo --traffic T2).")
     ws["A2"].font = NOTE
-    header(ws, 4, ["Vuelta", "Inicio mín.", "Inicio máx.", "Duración si sale en inicio mín. (T2)",
-                   "Duración si sale en inicio máx. (T2)"])
+    sols = {"LS": list_scheduling(inst, t2), "LPT": lpt(inst, t2)}
+    header(ws, 4, ["Vuelta", "Duración base (min)", "Ventana inicio mín.", "Ventana inicio máx.",
+                   "LS: bus", "LS: salida", "LS: llegada", "LS: p_j(s) (min)",
+                   "LPT: bus", "LPT: salida", "LPT: llegada", "LPT: p_j(s) (min)"])
     for k, j in enumerate(inst.jobs):
         r = 5 + k
-        ws.cell(r, 1, j.id)
-        ws.cell(r, 2, j.r / 1440).number_format = "hh:mm"
-        ws.cell(r, 3, j.d / 1440).number_format = "hh:mm"
-        ws.cell(r, 4, round(t2.travel_time(j.r, j.base), 2))
-        ws.cell(r, 5, round(t2.travel_time(j.d, j.base), 2))
-        for col in range(1, 6):
-            ws.cell(r, col).border = BOX
-    r0 = 15
-    ws.cell(r0 - 1, 1, "Asignaciones producidas por el programa (python -m sched demo --traffic T2)").font = BOLD
-    header(ws, r0, ["Algoritmo", "Vuelta", "Bus", "Salida", "Llegada", "Duración (min)"])
-    sols = [list_scheduling(inst, t2), lpt(inst, t2), branch_and_bound(inst, t2),
-            cpsat_solve(inst, t2, time_limit_s=20)]
-    r = r0 + 1
-    for s in sols:
-        for a in sorted(s.assignments.values(), key=lambda a: (a.bus_id, a.start)):
-            ws.cell(r, 1, s.algorithm)
-            ws.cell(r, 2, a.job_id)
-            ws.cell(r, 3, a.bus_id.split("-")[-1])
-            ws.cell(r, 4, a.start / 1440).number_format = "hh:mm"
-            ws.cell(r, 5, a.end / 1440).number_format = "hh:mm"
-            ws.cell(r, 6, round(a.duration, 2))
-            for col in range(1, 7):
-                ws.cell(r, col).border = BOX
-            r += 1
-    last = r - 1
-    rr = r0
-    header(ws, rr, ["Algoritmo", "Carga B1", "Carga B2", "Carga B3", "L_max (min)", "L_max (h)",
-                    "Desbalance (min)"], start_col=9)
-    for k, s in enumerate(sols):
-        row = rr + 1 + k
-        ws.cell(row, 9, s.algorithm)
+        vals = [j.id, j.base, j.r / 1440, j.d / 1440]
+        for name in ("LS", "LPT"):
+            a = sols[name].assignments[j.id]
+            vals += [a.bus_id.split("-")[-1], a.start / 1440, a.end / 1440, round(a.duration, 2)]
+        for c, v in enumerate(vals, start=1):
+            cell = ws.cell(r, c, v)
+            cell.border = BOX
+            if c in (3, 4, 6, 7, 10, 11):
+                cell.number_format = "hh:mm"
+    last = 4 + inst.n
+    r0 = last + 3
+    header(ws, r0, ["Algoritmo", "Carga B1", "Carga B2", "Carga B3", "L_max (min)",
+                    "Vueltas atendidas", "Desbalance (min)"])
+    for k, (name, busc, durc) in enumerate((("LS", "E", "H"), ("LPT", "I", "L"))):
+        row = r0 + 1 + k
+        ws.cell(row, 1, name)
         for b in range(3):
-            col = 10 + b
-            ws.cell(row, col, f"=SUMIFS($F${r0 + 1}:$F${last},$A${r0 + 1}:$A${last},$I{row},"
-                              f"$C${r0 + 1}:$C${last},\"B{b + 1}\")").number_format = "0.0"
-        ws.cell(row, 13, f"=MAX(J{row}:L{row})").number_format = "0.0"
-        ws.cell(row, 14, f"=M{row}/60").number_format = "0.00"
-        ws.cell(row, 15, f"=MAX(J{row}:L{row})-MIN(J{row}:L{row})").number_format = "0.0"
-        ws.cell(row, 13).fill = KEY
-        for col in range(9, 16):
+            ws.cell(row, 2 + b, f'=SUMIFS(${durc}$5:${durc}${last},${busc}$5:${busc}${last},"B{b + 1}")'
+                    ).number_format = "0.0"
+        ws.cell(row, 5, f"=MAX(B{row}:D{row})").number_format = "0.0"
+        ws.cell(row, 5).fill = KEY
+        ws.cell(row, 6, f'=COUNTIF(${busc}$5:${busc}${last},"B*")')
+        ws.cell(row, 7, f"=MAX(B{row}:D{row})-MIN(B{row}:D{row})").number_format = "0.0"
+        for col in range(1, 8):
             ws.cell(row, col).border = BOX
-    widths(ws, {"A": 11, "B": 11, "C": 11, "D": 16, "E": 16, "F": 14, "I": 12, "J": 10,
-                "K": 10, "L": 10, "M": 12, "N": 10, "O": 14})
+    lb_row = r0 + 4
+    ws.cell(lb_row, 1, "Cota inferior LB (min)").font = BOLD
+    ws.cell(lb_row, 2, round(lower_bound(inst, t2), 2))
+    ws.cell(lb_row, 3, "max( max_j pmin_j , Σ pmin_j / m ), pmin_j = menor p_j(s) dentro de la ventana").font = NOTE
+    widths(ws, {"A": 22, "B": 12, "C": 12, "D": 12, "E": 10, "F": 11, "G": 11, "H": 13,
+                "I": 10, "J": 11, "K": 11, "L": 13})
 
 
 def sheet_resultados(wb):
-    df = pd.read_csv(RES / "E1_37_rutas.csv")
+    df = pd.read_csv(RES / "E1_35_rutas.csv")
     d = df
     ws = wb.create_sheet("Resultados por ruta")
     ws["A1"] = "RESULTADOS PRELIMINARES POR RUTA (E1) – salida de experiments/run_experiments.py"
@@ -367,11 +305,7 @@ def sheet_resumen(wb):
     ws["A1"].font = TITLE
     r = 3
     blocks = [
-        ("E1 · 37 rutas × algoritmo × escenario de tráfico", "E1_resumen.csv"),
-        ("E2 · Heurísticas vs exactos (B&B y CP-SAT), 45 instancias pequeñas por escenario",
-         "E2_resumen.csv"),
-        ("E3 · Escalabilidad (instancias sintéticas, m = n/3, perfil T1)", "E3_escalabilidad.csv"),
-        ("E4 · Robustez ante tráfico variable, simulación Monte Carlo (T1, 100 réplicas por ruta)", "E4_resumen.csv"),
+        ("E1 · 35 rutas × {LS, LPT} × escenario de tráfico {T0, T1, T2}", "E1_resumen.csv"),
     ]
     for title, f in blocks:
         df = pd.read_csv(RES / f)
@@ -390,23 +324,23 @@ def sheet_resumen(wb):
 
 def notas(wb):
     ws = wb["Notas"]
-    for row in ws.iter_rows():
-        for c in row:
-            if c.value == "Opción C":
-                c.value = "Política de ventanas"
-    wb["Politica ventanas"]["A1"] = "POLÍTICA DE VENTANAS TEMPORALES"
     r = ws.max_row + 2
     rows = [
         ("MODELO DE LA ENTREGA 1", ""),
         ("Tráfico",
          "La duración de cada vuelta depende de su hora de salida: p_j(s) se calcula integrando una "
          "velocidad constante por franja (hojas 'Perfil trafico' y 'Calculadora vuelta')."),
-        ("Escenarios", "T0 sin tráfico, T1 normalizado (media 1), T2 pesimista. Además, variabilidad "
-                       "estocástica LogNormal (σ = 0.10 y 0.20) en simulación. Son parámetros experimentales."),
+        ("Escenarios", "T0 sin tráfico, T1 normalizado (media 1), T2 pesimista. Los factores son "
+                       "parámetros experimentales definidos por el grupo, no mediciones oficiales."),
+        ("Algoritmos", "Entrega 1: List Scheduling (LS) y LPT. Ramificación y Poda y CP-SAT se prevén como "
+                       "mecanismos de referencia para instancias pequeñas en etapas posteriores."),
         ("Almuerzo", "2 h por bus con ventana de inicio de ±30 min en 3 turnos (11:00, 12:30, 14:00)."),
         ("Objetivo", "Lexicográfico: 1) maximizar vueltas atendidas; 2) minimizar la carga máxima de conducción L_max."),
-        ("Control de datos", "Se verifica que cada ruta tenga tantas vueltas como 'Viajes planificados de la flota', "
-                             "que toda ventana sea válida y que toda vuelta quepa en la jornada."),
+        ("Generación de vueltas", "Regla general para todas las rutas: vueltas = round(flota × viajes por unidad); "
+                                  "inicios nominales equiespaciados entre 06:00 y round(22:00 − duración base); "
+                                  "ventana ±15 min en 06–09 y 16–19, ±30 min en el resto."),
+        ("Control de datos", "El programa regenera las vueltas con la regla general y verifica que coincidan con "
+                             "'Trabajos y ventanas'; además valida ventanas y jornada."),
         ("Saturación", "Hoja 'Saturacion flota': ρ > 1 indica que la flota no alcanza aunque no haya tráfico."),
     ]
     for a, b in rows:
@@ -417,9 +351,8 @@ def notas(wb):
 
 def main():
     insts = from_excel(SRC)
+    assert len(insts) == 35
     wb = openpyxl.load_workbook(SRC)
-    sheet_trabajos(wb, insts)
-    flag_source(wb)
     sheet_perfil(wb)
     sheet_calculadora(wb)
     sheet_saturacion(wb, len(insts))

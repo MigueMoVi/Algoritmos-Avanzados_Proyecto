@@ -1,9 +1,0 @@
-trafico,algoritmo,instancias,gap_medio_pct,gap_max_pct,optimo_alcanzado,peor_factibilidad,tiempo_medio_ms
-T0,BnB,45,-0.064,0.000,43,0,22.141
-T0,CP-SAT,45,0.000,0.000,45,0,45.028
-T0,LPT,45,8.701,35.323,2,26,0.173
-T0,LS,45,8.064,44.437,4,9,0.209
-T2,BnB,45,2.027,6.172,8,0,21.237
-T2,CP-SAT,45,0.000,0.000,45,0,288.850
-T2,LPT,45,17.562,59.631,0,32,0.174
-T2,LS,45,10.447,34.832,0,12,0.195

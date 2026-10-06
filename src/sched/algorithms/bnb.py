@@ -1,5 +1,9 @@
 """Ramificación y poda (Branch and Bound) para instancias pequeñas.
 
+NOTA: mecanismo de referencia previsto para etapas posteriores del proyecto.
+No forma parte de los algoritmos evaluados en la Entrega 1 (List Scheduling y
+LPT); se conserva como prototipo para validar instancias pequeñas.
+
 Espacio de búsqueda: asignaciones trabajo -> bus. Los trabajos se ramifican
 en orden cronológico de ventana (r_j) y en cada bus se programan con el
 inicio factible más temprano. Por tanto, el B&B es EXACTO dentro del espacio

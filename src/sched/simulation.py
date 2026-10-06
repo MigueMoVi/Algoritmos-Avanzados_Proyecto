@@ -1,5 +1,9 @@
 """Capa B del tráfico: simulación Monte Carlo de la ejecución de un plan.
 
+NOTA: evaluación de robustez prevista para etapas posteriores del proyecto.
+No forma parte de los algoritmos evaluados en la Entrega 1 (List Scheduling y
+LPT); se conserva como prototipo para validar instancias pequeñas.
+
 Cada bus ejecuta sus vueltas en el orden planificado:
   inicio_real = max(inicio_planificado, fin_real_anterior)
   (un bus no sale antes de su hora programada; si llega tarde, sale tarde)

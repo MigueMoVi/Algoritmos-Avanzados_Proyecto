@@ -1,30 +1,24 @@
 # Matriz de cumplimiento — Entrega 1
 
-Fuente: *Descripción del proyecto v2.0* (Algoritmos Avanzados, UNSAAC 2026-II) y avances de seguimiento.
-
-| Sección del documento | Requisito que cumple | Referencia en la guía |
+| Requisito | Sección / archivo | Estado |
 |---|---|---|
-| Resumen | Problema, técnicas, resultados principales y conclusión | §9.1 |
-| 1.1–1.3 Contexto, problema, tráfico | Formulación y contexto de aplicación | §8 Entrega 1 (formulación); §9.2; Avance 1 |
-| 1.4 Objetivos | Objetivos | §8 Entrega 1; §6 |
-| 1.5 Metodología general | Organización del trabajo y del documento | §9.2 |
-| 1.6 Alcance y delimitación | Alcance | §8 Entrega 1; Avance 1 (alcance viable) |
-| 2.1–2.2 Fundamentos y fuentes | Fundamentos; fuentes y criterios de selección | §8 Entrega 1; §9.3 a–b; AG-C06.03 |
-| 2.3 Conocimientos adicionales y aprendizaje autónomo | Plan de aprendizaje autónomo; necesidades de aprendizaje | §8 Entrega 1; §9.3 c–d; §12 AG-C06.01; Avance 1 |
-| 3 Stack tecnológico | Stack justificado; herramientas candidatas y criterios | §8 Entrega 1; §9.4; §12 AG-C06.02; Avance 2 |
-| 4.1–4.7 Elementos, datos, tráfico, entradas, salidas, restricciones, supuestos | Formulación del problema | §9.5; Avance 1 |
-| 4.8 Función objetivo y formulación matemática | Función objetivo | §9.5; Avance 1 |
-| 4.9 Datos e instancias | Instancias reproducibles; formatos | §5; §13.7; Avance 2 |
-| 5 Diseño algorítmico | Algoritmos, pseudocódigo, estructuras, invariantes, corrección, complejidad; ≥ 2 algoritmos y referencia exacta | §8 Entrega 1 (diseño); §9.6; §13.4; Avance 2 |
-| 6 Diseño del sistema | Módulos, flujo de información, formatos, dependencias | §9.7; Avance 2 |
-| 7 Ejemplo manual | Ejemplo manual / instancia pequeña paso a paso | §8 Entrega 1; Avances 1 y 2 |
-| 8 Pruebas y validación | Plan de pruebas: básicos, límite, adversos, escala; verificación de salidas | §8 Entrega 1; §9.8; §13.8; Avance 2 |
-| 9 Metodología experimental | Preguntas, hipótesis, instancias, variables, métricas, entorno, procedimiento | §9.9; Avance 2 (métricas) |
-| 10.1 Prototipo | Prototipo inicial: repositorio, carga de instancia, algoritmo, salida verificable | §8 Entrega 1; §13.3; Avance 3 |
-| 10.2–10.6 Resultados preliminares | Resultados con instancia conocida; comparación válida | §9.10; Avance 3 |
-| 11 Discusión y limitaciones | Pensamiento crítico; dificultades pendientes | §9.11; AG-C06.03; Avance 3 |
-| 12 Conclusiones | Respuesta a los objetivos | §9.12 |
-| 13 Referencias | Fuentes verificables | §9.13; §13.11 |
-| Anexo A Manual | Instalación y ejecución reproducible | §9.14; §13.7; §13.13 |
-| Anexo B Contribuciones y bitácora | Matriz de contribuciones; bitácora | §9.14; §12 AG-C06.01 |
-| Anexo C Resultados por ruta | Datos complementarios | §9.14 |
+| Formulación del problema | Word §1.2, §4 (elementos, entradas, salidas, restricciones, supuestos) | Cumple |
+| Formulación matemática con p_j(s_j) y objetivo lexicográfico (vueltas atendidas, L_max) | Word §4.3, §4.8 · `traffic.py`, `metrics.py` | Cumple |
+| Objetivos | Word §1.4 | Cumple |
+| Alcance y delimitación | Word §1.6 (viñetas: incluye / no incluye en esta etapa) | Cumple |
+| Fundamentos y fuentes | Word §2.1–2.2 · §13 Referencias | Cumple |
+| Aprendizaje autónomo | Word §2.3, Anexo B · `docs/plan_aprendizaje.md`, `docs/bitacora/` | Cumple (bitácoras por completar por cada integrante) |
+| Stack tecnológico | Word §3 · `requirements.txt`, `pyproject.toml` | Cumple |
+| Tráfico (T0, T1, T2; parámetros experimentales) | Word §4.3 · `traffic.py`, `data/traffic/*.json`, Excel hojas *Perfil trafico* y *Calculadora vuelta* | Cumple |
+| List Scheduling | Word §5.1, §5.3 · `algorithms/greedy.py` | Cumple |
+| LPT | Word §5.1, §5.3 · `algorithms/greedy.py` | Cumple |
+| Estructuras de datos, invariantes, corrección y complejidad | Word §5.2, §5.4, §5.5 · `model.py` | Cumple |
+| B&B y CP-SAT como referencia posterior | Word §5.6 (descripción conceptual) · prototipos en `bnb.py`, `cpsat.py` | Cumple (no se evalúan en esta entrega) |
+| Diseño del sistema y formatos | Word §6 · `README.md` | Cumple |
+| Instancia manual | Word §7 · Excel hoja *Instancia manual* · `python -m sched demo` · `tests/test_ls_lpt.py` | Cumple |
+| Plan de pruebas (básico, límite, adverso, ventanas, tráfico, almuerzo, validación) | Word §8 · `tests/` (36 pruebas, todas aprobadas) | Cumple |
+| Metodología experimental | Word §9 | Cumple |
+| Prototipo ejecutable (carga, LS/LPT, salida verificable, validación) | Word §10.1 · `src/sched/`, `python -m sched run` | Cumple |
+| Resultados preliminares de LS y LPT (35 rutas) | Word §10.2 · `results/E1_35_rutas.csv`, `results/E1_resumen.csv`, Excel *Resultados por ruta* | Cumple |
+| Reproducibilidad | `README.md` · `data/raw/tabla_proyecto_35_rutas.xlsx` · `data/instances/*.json` · `experiments/run_experiments.py` | Cumple |
+| Repositorio en GitHub | Word §10.1 | Pendiente: completar la URL |

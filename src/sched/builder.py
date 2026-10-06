@@ -1,10 +1,15 @@
 """Construcción de instancias.
 
-* from_excel: lee la tabla del proyecto (37 empresas/rutas, construida por
-  el grupo a partir de la fuente de referencia) y genera una instancia JSON
-  por ruta (hojas 'Parametros del modelo' y 'Trabajos y ventanas').
-* manual_instance: instancia didáctica del ejemplo resuelto a mano.
-* random_instance: generador reproducible (semilla) para pruebas y escala.
+Flujo general (igual para todas las rutas):
+    datos de la ruta -> parámetros del modelo -> generación de vueltas
+    -> ventanas de inicio -> instancia (el tráfico se aplica al resolver)
+
+* window_policy_jobs: regla general de generación de vueltas y ventanas.
+* from_excel: lee 'Parametros del modelo' (35 empresas/rutas), genera las
+  vueltas con la regla general y verifica que coincidan con la hoja
+  'Trabajos y ventanas' del Excel del proyecto.
+* manual_instance: instancia pequeña del ejemplo resuelto a mano.
+* random_instance: generador reproducible (semilla) para pruebas.
 """
 
 from __future__ import annotations
@@ -15,19 +20,24 @@ from pathlib import Path
 from .model import Instance, Job, make_buses
 from .timeutil import hhmm_to_min
 
+DAY_START, DAY_END = 360, 1320          # 06:00 y 22:00 en minutos
+
 
 def window_policy_jobs(route: str, n: int, base_min: float) -> list[Job]:
-    """Política de ventanas del proyecto: n inicios nominales equiespaciados
-    entre 06:00 y la última salida que termina a las 22:00; ventana ±15 min
-    en 06–09 y 16–19, ±30 min en el resto, recortada a [06:00, última salida].
-    Es la misma regla con la que se construyó la hoja 'Trabajos y ventanas'."""
-    import math
-    latest = math.floor(22 * 60 - base_min)
+    """Regla general de generación de vueltas y ventanas.
+
+    * última salida = round(22:00 - duración base);
+    * n inicios nominales equiespaciados entre 06:00 y la última salida,
+      redondeados al minuto (round de Python: mitad al par);
+    * ventana ±15 min si el inicio nominal está en 06:00–09:00 o 16:00–19:00,
+      ±30 min en el resto, recortada a [06:00, última salida].
+    """
+    latest = round(DAY_END - base_min)
     out = []
     for k in range(n):
-        nominal = math.floor(360 + k * (latest - 360) / max(1, n - 1) + 0.5)
+        nominal = round(DAY_START + k * (latest - DAY_START) / max(1, n - 1))
         half = 15 if (nominal < 540 or 960 <= nominal < 1140) else 30
-        out.append(Job(f"{route}-J{k + 1:03d}", route, base_min, max(360, nominal - half),
+        out.append(Job(f"{route}-J{k + 1:03d}", route, base_min, max(DAY_START, nominal - half),
                        min(latest, nominal + half), nominal))
     return out
 
@@ -43,8 +53,7 @@ def check_instance(inst: Instance) -> list[str]:
             issues.append(f"{j.id}: duración base no positiva")
         if j.r > j.d:
             issues.append(f"{j.id}: ventana inválida (r > d)")
-        # tolerancia de 1 min: las horas se expresan en HH:MM (redondeo al minuto);
-        # una salida en d que excede 22:00 por segundos simplemente no se usa.
+        # tolerancia de 1 min: las horas se expresan en HH:MM (redondeo al minuto)
         if j.r < inst.day_start or j.d + j.base > inst.day_end + 1.0:
             issues.append(f"{j.id}: la vuelta no cabe en la jornada")
     if inst.m <= 0:
@@ -53,12 +62,12 @@ def check_instance(inst: Instance) -> list[str]:
 
 
 def from_excel(path: str | Path) -> list[Instance]:
-    """Lee el Excel del proyecto. Control de consistencia: el número de
-    vueltas de cada ruta en 'Trabajos y ventanas' debe coincidir con
-    'Viajes planificados de la flota' ('Parametros del modelo'). Si no
-    coincide, las vueltas de la ruta se generan con window_policy_jobs a
-    partir de los parámetros del modelo y se deja constancia en
-    meta['control_datos']."""
+    """Construye una instancia por ruta a partir del Excel del proyecto.
+
+    Para cada ruta: flota y duración base de 'Parametros del modelo', vueltas
+    generadas con window_policy_jobs y comparación con 'Trabajos y ventanas'.
+    Cualquier discrepancia o dato inválido detiene la construcción.
+    """
     import openpyxl
 
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -67,38 +76,46 @@ def from_excel(path: str | Path) -> list[Instance]:
         if not row[0]:
             continue
         params[row[0]] = {"company": row[1], "m": int(row[2]), "base_h": float(row[3]),
-                          "demanda_h": row[4], "viajes_plan": row[6]}
-    jobs: dict[str, list[Job]] = {r: [] for r in params}
+                          "demanda_h": row[4], "viajes_plan": int(row[6])}
+    sheet: dict[str, list[tuple]] = {r: [] for r in params}
     for row in wb["Trabajos y ventanas"].iter_rows(min_row=2, values_only=True):
         if not row[0]:
             continue
-        jid, route, _comp, _bus, base_h, _per, nominal, r, d = row[:9]
-        jobs[route].append(Job(jid, route, float(base_h) * 60, hhmm_to_min(r),
-                               hhmm_to_min(d), hhmm_to_min(nominal)))
-    out = []
+        jid, route, _comp, _bus, _base_h, _per, nominal, r, d = row[:9]
+        if route not in sheet:
+            raise ValueError(f"'Trabajos y ventanas' contiene una ruta sin parámetros: {route}")
+        sheet[route].append((jid, hhmm_to_min(nominal), hhmm_to_min(r), hhmm_to_min(d)))
+
+    out, errors = [], []
     for route, p in params.items():
-        meta = {"fuente": "Tabla del proyecto (37 empresas/rutas)", "duracion_base_h": p["base_h"],
-                "demanda_pasajeros_h": p["demanda_h"], "viajes_planificados": p["viajes_plan"]}
-        js = jobs[route]
-        if p["viajes_plan"] and len(js) != int(p["viajes_plan"]):
-            meta["control_datos"] = (f"Vueltas generadas con la política de ventanas a partir de "
-                                     f"'Parametros del modelo' ({int(p['viajes_plan'])} vueltas)")
-            js = window_policy_jobs(route, int(p["viajes_plan"]), p["base_h"] * 60)
-        inst = Instance(route=route, company=p["company"], jobs=js,
-                        buses=make_buses(route, p["m"]), meta=meta)
-        issues = check_instance(inst)
-        if issues:
-            raise ValueError("Datos inválidos: " + "; ".join(issues[:5]))
+        jobs = window_policy_jobs(route, p["viajes_plan"], p["base_h"] * 60)
+        got = sheet[route]
+        if len(got) != len(jobs):
+            errors.append(f"{route}: {len(got)} vueltas en la hoja, {len(jobs)} planificadas")
+        else:
+            for j, (jid, nom, r, d) in zip(jobs, got):
+                if (j.id, j.nominal, j.r, j.d) != (jid, nom, r, d):
+                    errors.append(f"{route}: la vuelta {jid} no coincide con la regla general")
+                    break
+        inst = Instance(route=route, company=p["company"], jobs=jobs,
+                        buses=make_buses(route, p["m"]),
+                        meta={"fuente": "Excel del proyecto (35 empresas/rutas)",
+                              "duracion_base_h": p["base_h"],
+                              "demanda_pasajeros_h": p["demanda_h"],
+                              "viajes_planificados": p["viajes_plan"]})
+        errors.extend(check_instance(inst))
         out.append(inst)
+    if errors:
+        raise ValueError("Datos inconsistentes: " + "; ".join(errors[:5]))
     return out
 
 
 def manual_instance() -> Instance:
     """Instancia del ejemplo manual de la monografía.
 
-    Ruta didáctica derivada de RTI-08 (CRISTO BLANCO S.A., tiempo de vuelta
-    1.57 h); la duración base se redondea a 90 min para el cálculo a mano.
-    3 buses, 8 vueltas, almuerzo en turnos 10:00 / 12:00 / 14:00.
+    Ruta pequeña con duración base de 90 min (cercana a la de RTI-08, 1.57 h,
+    redondeada para el cálculo a mano). 3 buses, 8 vueltas; almuerzo con
+    ventanas 10:30–11:30, 12:00–13:00 y 13:30–14:30.
     """
     route = "DEMO"
     spec = [  # id, r, d  (política de ventanas del proyecto)
@@ -113,7 +130,7 @@ def manual_instance() -> Instance:
     ]
     jobs = [Job(j, route, 90.0, hhmm_to_min(r), hhmm_to_min(d),
                 (hhmm_to_min(r) + hhmm_to_min(d)) / 2) for j, r, d in spec]
-    return Instance(route=route, company="Ruta didáctica (base RTI-08)", jobs=jobs,
+    return Instance(route=route, company="Ruta del ejemplo manual", jobs=jobs,
                     buses=make_buses(route, 3),
                     meta={"nota": "Instancia didáctica para el ejemplo manual"})
 

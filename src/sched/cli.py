@@ -1,11 +1,17 @@
 """Interfaz de línea de comandos.
 
-    python -m sched build                       # Excel -> data/instances/*.json
-    python -m sched demo --traffic T2           # ejemplo manual (LS, LPT, BnB, CP-SAT)
-    python -m sched run --route RTI-01 --alg lpt --traffic T1 [--gantt]
-    python -m sched run --instance mi.json --alg ls
-    python -m sched simulate --route RTI-01 --alg ls --traffic T1 --sigma 0.2
-    python -m sched profiles                    # muestra los perfiles T0/T1/T2
+Entrega 1 (algoritmos implementados y evaluados: LS y LPT):
+    python -m sched build                       # Excel -> data/instances/*.json (35 rutas)
+    python -m sched profiles                    # perfiles de tráfico T0/T1/T2
+    python -m sched demo --traffic T2           # ejemplo manual con LS y LPT
+    python -m sched run --route RTI-01 --alg ls --traffic T1 [--gantt]
+    python -m sched run --instance mi.json --alg lpt
+
+Mecanismos de referencia previstos para etapas posteriores (prototipos, no
+forman parte de la evaluación de la Entrega 1):
+    python -m sched run --instance pequeña.json --alg bnb | cpsat
+    python -m sched demo --referencia           # agrega B&B y CP-SAT al ejemplo manual
+    python -m sched simulate ...                # evaluación de robustez (Monte Carlo)
 """
 
 from __future__ import annotations
@@ -18,7 +24,7 @@ from pathlib import Path
 
 from .algorithms import ALGORITHMS, branch_and_bound
 from .builder import from_excel, manual_instance
-from .metrics import compute_metrics
+from .metrics import compute_metrics, lower_bound
 from .model import Instance
 from .simulation import simulate
 from .timeutil import min_to_hhmm
@@ -110,12 +116,14 @@ def cmd_demo(args) -> None:
     profile = get_profile(args.traffic)
     print(f"Instancia manual: {inst.m} buses, {inst.n} vueltas, base 90 min, tráfico {profile.name}")
     print("Ventanas:", ", ".join(f"{j.id}[{min_to_hhmm(j.r)}–{min_to_hhmm(j.d)}]" for j in inst.jobs))
-    algs = ["ls", "lpt", "bnb"] + (["cpsat"] if not args.no_cpsat else [])
+    print(f"Cota inferior LB = {lower_bound(inst, profile):.1f} min")
+    algs = ["ls", "lpt"] + (["bnb", "cpsat"] if args.referencia else [])
     for alg in algs:
         sch = _solve(inst, alg, profile)
         m = compute_metrics(sch, profile)
         errs = validate(sch, profile)
-        print(f"\n[{sch.algorithm}] L_max = {m['Lmax_h'] * 60:.1f} min  "
+        print(f"\n[{sch.algorithm}] atendidas = {m['asignados']}/{m['trabajos']}  "
+              f"L_max = {m['Lmax_h'] * 60:.1f} min  "
               f"(validación: {'OK' if not errs else errs})")
         for bus, items in sch.by_bus().items():
             load = sum(a.duration for a in items)
@@ -147,14 +155,15 @@ def main(argv=None) -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     b = sub.add_parser("build", help="Excel -> instancias JSON")
-    b.add_argument("--excel", default=str(DATA / "raw" / "tabla_37_empresas.xlsx"))
+    b.add_argument("--excel", default=str(DATA / "raw" / "tabla_proyecto_35_rutas.xlsx"))
     b.set_defaults(func=cmd_build)
 
     def common(p):
         g = p.add_mutually_exclusive_group()
         g.add_argument("--route", default="DEMO", help="código de ruta (p. ej. RTI-01) o DEMO")
         g.add_argument("--instance", help="ruta a un archivo JSON de instancia")
-        p.add_argument("--alg", choices=["ls", "lpt", "bnb", "cpsat"], default="ls")
+        p.add_argument("--alg", choices=["ls", "lpt", "bnb", "cpsat"], default="ls",
+                       help="ls | lpt (Entrega 1); bnb | cpsat: referencia para instancias pequeñas")
         p.add_argument("--traffic", default="T1", help="T0 | T1 | T2 | archivo.json")
 
     r = sub.add_parser("run", help="resolver una instancia")
@@ -165,10 +174,11 @@ def main(argv=None) -> None:
 
     d = sub.add_parser("demo", help="ejemplo manual")
     d.add_argument("--traffic", default="T2")
-    d.add_argument("--no-cpsat", action="store_true")
+    d.add_argument("--referencia", action="store_true",
+                   help="incluir B&B y CP-SAT (mecanismos de referencia, etapa posterior)")
     d.set_defaults(func=cmd_demo)
 
-    s = sub.add_parser("simulate", help="Monte Carlo de la ejecución de un plan")
+    s = sub.add_parser("simulate", help="robustez por Monte Carlo (etapa posterior)")
     common(s)
     s.add_argument("--sigma", type=float, default=0.10)
     s.add_argument("--reps", type=int, default=200)

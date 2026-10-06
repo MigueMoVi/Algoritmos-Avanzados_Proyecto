@@ -1,5 +1,9 @@
 """Modelo exacto de referencia con OR-Tools CP-SAT (tiempo discretizado a 1 min).
 
+NOTA: mecanismo de referencia previsto para etapas posteriores del proyecto.
+No forma parte de los algoritmos evaluados en la Entrega 1 (List Scheduling y
+LPT); se conserva como prototipo para validar instancias pequeñas.
+
 Variables
   s_j  in [r_j, d_j]          inicio entero (minutos)
   p_j  = tabla_j[s_j - r_j]   duración con tráfico (AddElement, redondeada

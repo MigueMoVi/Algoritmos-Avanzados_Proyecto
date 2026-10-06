@@ -1,7 +1,8 @@
 # Asignación de vueltas a buses con ventanas y tráfico — Transporte urbano de Cusco
 
-Proyecto semestral de **Algoritmos Avanzados** (UNSAAC, 2026-II) — **Grupo 4**
+Proyecto semestral de **Algoritmos Avanzados** (UNSAAC, 2026-II) — **Grupo 4**.
 Tema: *optimización de asignación de trabajos en máquinas idénticas*.
+Docente: Héctor Eduardo Ugarte Rojas.
 
 | Integrante | Código |
 |---|---|
@@ -10,15 +11,43 @@ Tema: *optimización de asignación de trabajos en máquinas idénticas*.
 | Huacani de la Cruz, Dany | 081561 |
 | Moreano Villena, Miguel Angel | 211859 |
 
-Docente: Héctor Eduardo Ugarte Rojas.
+## Objetivo
 
-## Problema en una línea
+Para cada empresa/ruta (35 rutas experimentales), asignar cada **vuelta** (origen → destino →
+origen) a un **bus** de su propia flota (máquinas idénticas) y fijar su hora de salida dentro de
+su **ventana**, respetando la jornada 06:00–22:00, el **almuerzo** de 2 h de cada bus y un
+**tiempo de viaje p_j(s_j) que depende de la hora de salida** por efecto del tráfico.
 
-Para cada empresa/ruta (37 en total), asignar cada **vuelta** (origen → destino → origen) a un
-**bus** de su propia flota (máquinas idénticas), eligiendo su hora de salida dentro de una
-**ventana**, respetando la jornada 06:00–22:00, el **almuerzo** de 2 h y un **tiempo de viaje que
-depende del tráfico** según la hora de salida. Objetivo lexicográfico: 1) maximizar vueltas
-atendidas, 2) minimizar la carga máxima por bus `L_max`.
+Objetivo lexicográfico: 1) maximizar las vueltas atendidas; 2) minimizar la carga máxima de
+conducción por bus `L_max`.
+
+**Entrega 1:** se implementan y comparan **List Scheduling (LS)** y **LPT**. El repositorio incluye
+además prototipos de Ramificación y Poda, CP-SAT y simulación de robustez, previstos como
+mecanismos de referencia para etapas posteriores; no forman parte de la evaluación de esta entrega.
+
+## Estructura
+
+```
+src/sched/
+  traffic.py      perfiles de tráfico T0/T1/T2 y tiempo de viaje p_j(s)
+  model.py        Job, Bus, Instance, BusTimeline (huecos y almuerzo), Schedule
+  builder.py      Excel -> instancias (regla general de vueltas y ventanas), validación de datos
+  algorithms/
+    greedy.py     List Scheduling y LPT                       <- Entrega 1
+    bnb.py        Ramificación y Poda                          (referencia, etapa posterior)
+    cpsat.py      modelo CP-SAT                                (referencia, etapa posterior)
+  simulation.py   robustez por Monte Carlo                     (etapa posterior)
+  validator.py    verificación independiente de restricciones
+  metrics.py      vueltas atendidas, L_max, cota inferior, desbalance, saturación
+  viz.py, cli.py  diagramas de Gantt e interfaz de línea de comandos
+tests/            pytest (LS/LPT, tráfico, datos, referencia)
+experiments/      run_experiments.py (E1), build_excel.py, fig_arquitectura.py, demo_prototipo.ipynb
+data/raw/         Excel del proyecto (35 empresas/rutas)
+data/instances/   instancias JSON (35 rutas + DEMO), generadas por `build`
+data/traffic/     perfiles de tráfico en JSON
+results/          CSV, figuras y Excel de la Entrega 1
+docs/             informe, plan de aprendizaje, bitácoras, contribuciones y matriz de requisitos
+```
 
 ## Instalación
 
@@ -27,85 +56,60 @@ Requiere Python ≥ 3.10.
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-pip install -e .                                       # instala el paquete `sched`
+pip install -e .
+# opcional, solo para el prototipo CP-SAT: pip install ortools
 ```
 
-Sin `pip install -e .` también funciona anteponiendo `PYTHONPATH=src` (Linux/macOS) o
-`set PYTHONPATH=src` (Windows) a los comandos.
+Sin `pip install -e .` los comandos funcionan anteponiendo `PYTHONPATH=src`.
 
-## Uso rápido
+## Ejecución
 
 ```bash
-python -m sched build                                   # Excel -> data/instances/*.json (37 rutas + DEMO)
-python -m sched profiles                                # perfiles de tráfico T0 / T1 / T2
-python -m sched demo --traffic T2                       # ejemplo manual: LS, LPT, B&B y CP-SAT
-python -m sched run --route RTI-01 --alg ls --traffic T1 --gantt
-python -m sched run --route RTI-01 --alg lpt --traffic T2
-python -m sched run --instance mi_instancia.json --alg bnb --traffic T0
-python -m sched simulate --route RTI-01 --alg ls --traffic T1 --sigma 0.2
-python -m pytest -q                                     # 35 pruebas
-python experiments/run_experiments.py                   # E1–E4 (≈ 3–4 min) -> results/
-python experiments/build_excel.py                       # Excel actualizado -> results/
+python -m sched build                                     # genera data/instances/*.json (35 rutas + DEMO)
+python -m sched profiles                                  # muestra T0, T1, T2
+python -m sched run --route RTI-01 --alg ls  --traffic T1 --gantt     # List Scheduling
+python -m sched run --route RTI-01 --alg lpt --traffic T1             # LPT
+python -m sched demo --traffic T2                         # ejemplo manual (LS y LPT)
+python experiments/run_experiments.py                     # E1: 35 rutas × {LS, LPT} × {T0, T1, T2}
+python experiments/build_excel.py                         # Excel de la Entrega 1
+python -m pytest -q                                       # pruebas
 ```
 
-Cada `run` imprime métricas, **valida** el programa con un verificador independiente y escribe
-`results/<ruta>_<alg>_<tráfico>.csv` (y un diagrama de Gantt con `--gantt`).
+Cada `run` imprime las métricas, **valida** la solución y escribe
+`results/<ruta>_<alg>_<tráfico>.csv` (y un Gantt con `--gantt`).
 
-## Estructura del repositorio
-
-```
-src/sched/
-  traffic.py      modelo de tráfico (velocidad por franja, FIFO) y perfiles T0/T1/T2
-  model.py        Job, Bus, Instance, BusTimeline (huecos + almuerzo flexible), Schedule
-  builder.py      Excel -> instancias; instancia manual; generador aleatorio con semilla
-  algorithms/
-    greedy.py     List Scheduling (LS) y LPT adaptados
-    bnb.py        Ramificación y poda (exacto en instancias pequeñas)
-    cpsat.py      Modelo exacto de referencia con OR-Tools CP-SAT
-  validator.py    verificación independiente de todas las restricciones
-  metrics.py      L_max, desbalance, utilización, cota inferior, saturación ρ
-  simulation.py   Monte Carlo de ejecución con tráfico estocástico
-  viz.py          diagramas de Gantt
-  cli.py          interfaz de línea de comandos (python -m sched ...)
-tests/            pytest: casos básicos, límite, adversos y de escala
-experiments/      run_experiments.py (E1–E4) y build_excel.py
-data/raw/         Excel del proyecto (37 empresas/rutas)
-data/instances/   instancias JSON generadas (una por ruta + DEMO)
-data/traffic/     perfiles de tráfico en JSON (editables)
-results/          CSV, figuras y Excel actualizado
-docs/             plan de aprendizaje, bitácoras y matriz de contribuciones
-```
-
-## Formatos de archivo
-
-**Instancia (`data/instances/RTI-01.json`)**
+### Ejemplo mínimo
 
 ```json
-{"route": "RTI-01", "company": "E.T. SAYLLA S.A.", "day_start": "06:00", "day_end": "22:00",
- "buses": [{"id": "RTI-01-B1", "lunch_r": "10:30", "lunch_d": "11:30", "lunch_min": 120}, ...],
- "jobs":  [{"id": "RTI-01-J001", "base_min": 148.8, "r": "06:00", "d": "06:15", "nominal": "06:00"}, ...]}
+{"route": "MINI", "company": "Ejemplo", "day_start": "06:00", "day_end": "22:00",
+ "buses": [{"id": "MINI-B1", "lunch_r": "10:30", "lunch_d": "11:30", "lunch_min": 120},
+           {"id": "MINI-B2", "lunch_r": "12:00", "lunch_d": "13:00", "lunch_min": 120}],
+ "jobs":  [{"id": "J1", "base_min": 90, "r": "06:00", "d": "06:30", "nominal": "06:15"},
+           {"id": "J2", "base_min": 90, "r": "06:30", "d": "07:00", "nominal": "06:45"},
+           {"id": "J3", "base_min": 90, "r": "08:00", "d": "08:30", "nominal": "08:15"}]}
 ```
 
-**Perfil de tráfico (`data/traffic/perfil_T2.json`)** — franjas `start`, `end`, `factor`.
-Se puede pasar un perfil propio con `--traffic ruta/al/perfil.json`.
+```bash
+python -m sched run --instance mini.json --alg ls --traffic T2
+```
 
-**Salida (`results/*.csv`)** — una fila por vuelta: ruta, trabajo, bus, ventana, inicio, fin,
-duración con tráfico y duración base; las vueltas no asignadas aparecen con `bus = NO_ASIGNADO`.
+## Formato de datos
 
-## Reproducibilidad
+* **Instancia (JSON):** ruta, empresa, jornada, buses (ventana de almuerzo) y vueltas
+  (duración base en minutos, ventana `r`–`d` y salida nominal, en HH:MM).
+* **Perfil de tráfico (JSON):** franjas `start`, `end`, `factor` y `outside_factor`.
+  Se puede usar un perfil propio con `--traffic archivo.json`.
+* **Salida (CSV):** una fila por vuelta: ruta, vuelta, bus, ventana, salida, llegada, duración con
+  tráfico y duración base; las no atendidas llevan `bus = NO_ASIGNADO`.
 
-* Todas las instancias aleatorias y la simulación usan semillas fijas (`seed`, por defecto 2026).
-* CP-SAT corre con 1 hilo y semilla fija en el ejemplo manual.
-* Los factores de tráfico y las ventanas son **supuestos experimentales** documentados; la
-  fuente 2020 no contiene horarios individuales ni mediciones de congestión.
-
-## Notas sobre los datos
+## Datos
 
 | Tipo | Contenido |
 |---|---|
-| Datos de la fuente de referencia | Flota operativa, tiempo de vuelta, demanda y viajes por unidad vehicular de las 37 empresas/rutas (*Tabla de datos — Unidades de transporte — Flota operativa 2020*). |
-| Parámetros construidos por el grupo | Excel del proyecto, número de vueltas planificadas (flota × viajes por unidad), inicios nominales e instancias JSON. |
-| Supuestos experimentales | Ventanas de inicio (±15 min en 06–09 y 16–19; ±30 min en el resto), jornada 06:00–22:00, almuerzo de 2 h en tres turnos con ventana de ±30 min, perfiles de tráfico T0/T1/T2 y variabilidad σ. |
+| Fuente de referencia | Flota operativa, tiempo de vuelta, demanda y viajes por unidad vehicular (*Tabla de datos — Unidades de transporte — Flota operativa 2020*). Se seleccionaron 35 empresas/rutas con parámetros consistentes para la generación reproducible de instancias. |
+| Construidos por el grupo | Excel del proyecto, vueltas planificadas = round(flota × viajes por unidad), inicios nominales e instancias JSON. |
+| Supuestos experimentales | Ventanas (±15 min en 06–09 y 16–19; ±30 min en el resto), jornada 06:00–22:00, almuerzo de 2 h en tres turnos con ventana de ±30 min, perfiles de tráfico T0/T1/T2. Los factores de tráfico no son mediciones oficiales. |
 
-El constructor verifica que el número de vueltas de cada ruta coincida con las vueltas
-planificadas, que toda ventana sea válida (r ≤ d) y que toda vuelta pueda terminar antes de las 22:00.
+`build` genera las vueltas de **todas** las rutas con la misma regla general y verifica que
+coincidan con la hoja *Trabajos y ventanas*; también valida ventanas y jornada. Ninguna ruta
+recibe tratamiento especial.
