@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+results/*_LS_*.csv
+results/*_LPT_*.csv
+results/*_BnB_*.csv
+results/*_CP-SAT_*.csv
+~$*.xlsx

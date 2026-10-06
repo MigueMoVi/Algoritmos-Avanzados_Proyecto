@@ -1,0 +1,49 @@
+{
+  "name": "T1",
+  "description": "Perfil normalizado: media ponderada del factor = 1 en 06:00–22:00",
+  "outside_factor": 0.7977839335180056,
+  "bands": [
+    {
+      "start": "06:00",
+      "end": "06:30",
+      "factor": 0.797784,
+      "label": "Valle temprano"
+    },
+    {
+      "start": "06:30",
+      "end": "09:00",
+      "factor": 1.152355,
+      "label": "Punta mañana"
+    },
+    {
+      "start": "09:00",
+      "end": "12:00",
+      "factor": 0.886427,
+      "label": "Valle"
+    },
+    {
+      "start": "12:00",
+      "end": "14:30",
+      "factor": 1.063712,
+      "label": "Punta mediodía (salida escolar)"
+    },
+    {
+      "start": "14:30",
+      "end": "17:00",
+      "factor": 0.886427,
+      "label": "Valle"
+    },
+    {
+      "start": "17:00",
+      "end": "20:00",
+      "factor": 1.196676,
+      "label": "Punta tarde"
+    },
+    {
+      "start": "20:00",
+      "end": "22:00",
+      "factor": 0.797784,
+      "label": "Valle nocturno"
+    }
+  ]
+}

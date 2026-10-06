@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sched"
+version = "0.1.0"
+description = "Asignación de vueltas a buses con ventanas y tráfico (Algoritmos Avanzados, UNSAAC, Grupo 4)"
+requires-python = ">=3.10"
+dependencies = ["openpyxl>=3.1", "pandas>=2.0", "matplotlib>=3.7", "ortools>=9.8"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

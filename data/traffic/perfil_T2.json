@@ -1,0 +1,49 @@
+{
+  "name": "T2",
+  "description": "Perfil pesimista: factores de congestión sin normalizar",
+  "outside_factor": 0.9,
+  "bands": [
+    {
+      "start": "06:00",
+      "end": "06:30",
+      "factor": 0.9,
+      "label": "Valle temprano"
+    },
+    {
+      "start": "06:30",
+      "end": "09:00",
+      "factor": 1.3,
+      "label": "Punta mañana"
+    },
+    {
+      "start": "09:00",
+      "end": "12:00",
+      "factor": 1.0,
+      "label": "Valle"
+    },
+    {
+      "start": "12:00",
+      "end": "14:30",
+      "factor": 1.2,
+      "label": "Punta mediodía (salida escolar)"
+    },
+    {
+      "start": "14:30",
+      "end": "17:00",
+      "factor": 1.0,
+      "label": "Valle"
+    },
+    {
+      "start": "17:00",
+      "end": "20:00",
+      "factor": 1.35,
+      "label": "Punta tarde"
+    },
+    {
+      "start": "20:00",
+      "end": "22:00",
+      "factor": 0.9,
+      "label": "Valle nocturno"
+    }
+  ]
+}
