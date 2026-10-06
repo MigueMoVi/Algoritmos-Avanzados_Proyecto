@@ -28,7 +28,7 @@ mecanismos de referencia para etapas posteriores; no forman parte de la evaluaci
 ## Estructura
 
 ```
-src/sched/
+src/bus_sched/
   traffic.py      perfiles de tráfico T0/T1/T2 y tiempo de viaje p_j(s)
   model.py        Job, Bus, Instance, BusTimeline (huecos y almuerzo), Schedule
   builder.py      Excel -> instancias (regla general de vueltas y ventanas), validación de datos
@@ -41,12 +41,12 @@ src/sched/
   metrics.py      vueltas atendidas, L_max, cota inferior, desbalance, saturación
   viz.py, cli.py  diagramas de Gantt e interfaz de línea de comandos
 tests/            pytest (LS/LPT, tráfico, datos, referencia)
-experiments/      run_experiments.py (E1), build_excel.py, fig_arquitectura.py, demo_prototipo.ipynb
+experiments/      run_experiments.py (E1), build_excel.py, export_latex.py, fig_arquitectura.py, demo_prototipo.ipynb
 data/raw/         Excel del proyecto (35 empresas/rutas)
 data/instances/   instancias JSON (35 rutas + DEMO), generadas por `build`
 data/traffic/     perfiles de tráfico en JSON
 results/          CSV, figuras y Excel de la Entrega 1
-docs/             informe, plan de aprendizaje, bitácoras, contribuciones y matriz de requisitos
+docs/             informe LaTeX (docs/informe), plan de aprendizaje, bitácoras y contribuciones
 ```
 
 ## Instalación
@@ -65,13 +65,14 @@ Sin `pip install -e .` los comandos funcionan anteponiendo `PYTHONPATH=src`.
 ## Ejecución
 
 ```bash
-python -m sched build                                     # genera data/instances/*.json (35 rutas + DEMO)
-python -m sched profiles                                  # muestra T0, T1, T2
-python -m sched run --route RTI-01 --alg ls  --traffic T1 --gantt     # List Scheduling
-python -m sched run --route RTI-01 --alg lpt --traffic T1             # LPT
-python -m sched demo --traffic T2                         # ejemplo manual (LS y LPT)
+python -m bus_sched build                                     # genera data/instances/*.json (35 rutas + DEMO)
+python -m bus_sched profiles                                  # muestra T0, T1, T2
+python -m bus_sched run --route RTI-01 --alg ls  --traffic T1 --gantt     # List Scheduling
+python -m bus_sched run --route RTI-01 --alg lpt --traffic T1             # LPT
+python -m bus_sched demo --traffic T2                         # ejemplo manual (LS y LPT)
 python experiments/run_experiments.py                     # E1: 35 rutas × {LS, LPT} × {T0, T1, T2}
 python experiments/build_excel.py                         # Excel de la Entrega 1
+python experiments/export_latex.py                        # tablas y figuras del informe LaTeX
 python -m pytest -q                                       # pruebas
 ```
 
@@ -90,7 +91,7 @@ Cada `run` imprime las métricas, **valida** la solución y escribe
 ```
 
 ```bash
-python -m sched run --instance mini.json --alg ls --traffic T2
+python -m bus_sched run --instance mini.json --alg ls --traffic T2
 ```
 
 ## Formato de datos
@@ -113,3 +114,17 @@ python -m sched run --instance mini.json --alg ls --traffic T2
 `build` genera las vueltas de **todas** las rutas con la misma regla general y verifica que
 coincidan con la hoja *Trabajos y ventanas*; también valida ventanas y jornada. Ninguna ruta
 recibe tratamiento especial.
+
+## Informe (LaTeX)
+
+El informe de la Entrega 1 está en `docs/informe/` (`main.tex` + `secciones/`).
+
+```bash
+cd docs/informe
+latexmk -pdf main.tex          # o pdflatex main.tex dos veces
+```
+
+Las tablas de resultados (`tablas/`) y las figuras (`figuras/`) se regeneran con
+`python experiments/export_latex.py`. Las capturas de pantalla se guardan en
+`docs/informe/capturas/` con los nombres listados en `capturas/LEEME.txt`; si un archivo no
+existe, el PDF muestra un recuadro reservado con el nombre esperado.

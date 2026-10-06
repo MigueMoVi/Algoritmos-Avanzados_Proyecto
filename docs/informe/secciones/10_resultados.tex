@@ -1,0 +1,82 @@
+\section{Prototipo y resultados preliminares}\label{sec:resultados}
+
+\subsection{Prototipo}
+\textbf{Repositorio:} \colorbox{yellow}{[completar con la URL de GitHub del grupo]}
+
+\begin{lstlisting}
+transporte-cusco-scheduling/
+|-- src/bus_sched/     traffic · model · builder · validator · metrics · viz · cli
+|   `-- algorithms/    greedy.py (LS, LPT) · bnb.py, cpsat.py (referencia, etapa posterior)
+|-- tests/             pytest: test_ls_lpt · test_traffic · test_datos · test_referencia
+|-- experiments/       run_experiments.py (E1) · build_excel.py · export_latex.py · demo_prototipo.ipynb
+|-- data/              raw/ (Excel, 35 rutas) · instances/ (JSON) · traffic/ (perfiles JSON)
+|-- results/           E1_35_rutas.csv · E1_resumen.csv · figuras · Excel de la entrega
+`-- docs/              informe LaTeX, plan de aprendizaje, bitácoras, contribuciones
+\end{lstlisting}
+
+\captura[5.5cm]{repositorio_github.png}{Repositorio del proyecto en GitHub.}{fig:cap-repo}
+
+El prototipo \textbf{carga una instancia, genera las vueltas, ejecuta LS o LPT, valida la solución y produce una salida verificable}. Salida real de la ejecución:
+\begin{lstlisting}
+$ python -m bus_sched build
+35 instancias + DEMO escritas en data/instances; perfiles en data/traffic
+
+$ python -m bus_sched run --route RTI-01 --alg ls --traffic T1 --gantt
+RTI-01 (E.T. SAYLLA S.A.) · 35 buses · 103 vueltas · algoritmo LS · tráfico T1
+  L_max = 7.772 h | L_min = 5.207 h | desbalance = 2.565 h | cota inf. = 7.063 h | gap = 10.0 %
+  asignados = 103/103 | utilización = 52.5 % | sobrecosto tráfico = 0.7 % | tiempo = 12.8 ms
+  VALIDACIÓN: OK (0 violaciones)
+  asignaciones -> results/RTI-01_LS_T1.csv
+
+$ python -m bus_sched run --route RTI-01 --alg lpt --traffic T1
+RTI-01 (E.T. SAYLLA S.A.) · 35 buses · 103 vueltas · algoritmo LPT · tráfico T1
+  L_max = 9.733 h | L_min = 5.104 h | desbalance = 4.629 h | cota inf. = 6.875 h | gap = 41.6 %
+  asignados = 100/103 | utilización = 50.7 % | sobrecosto tráfico = 0.2 % | tiempo = 8.8 ms
+  VALIDACIÓN: OK (0 violaciones)
+\end{lstlisting}
+
+\captura[5.5cm]{build_instancias.png}{Generación de las 35 instancias (\texttt{python -m bus\_sched build}).}{fig:cap-build}
+\captura[6cm]{run_ls_RTI-01.png}{Ejecución de List Scheduling sobre RTI-01 con tráfico T1.}{fig:cap-ls}
+\captura[6cm]{run_lpt_RTI-01.png}{Ejecución de LPT sobre RTI-01 con tráfico T1.}{fig:cap-lpt}
+
+Una instancia conocida (la de la sección~\ref{sec:manual}) o una nueva escrita en el formato JSON de la sección~\ref{sec:sistema} se resuelve con \texttt{python -m bus\_sched run --instance archivo.json --alg ls} (o \texttt{--alg lpt}), y el validador confirma su factibilidad.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figuras/fig_gantt_RTI-01_LS_T1.png}
+\caption{Programa de RTI-01 (35 buses, 103 vueltas) con List Scheduling y tráfico T1.}\label{fig:gantt-rti01}
+\end{figure}
+
+\subsection{Resultados preliminares de E1}\label{sec:e1}
+\input{tablas/e1_resumen}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figuras/fig_E1_escenarios.png}
+\caption{Vueltas no atendidas y brecha media respecto de la cota inferior, por escenario de tráfico.}\label{fig:e1}
+\end{figure}
+
+\captura[5cm]{run_experiments_E1.png}{Ejecución del experimento E1 (\texttt{python experiments/run\_experiments.py}).}{fig:cap-e1}
+
+\begin{itemize}
+  \item \textbf{Sin tráfico, LS y LPT coinciden.} Las vueltas de una ruta tienen la misma duración base, así que el orden de LPT empata y se desempata por $r_j$, que es el orden de LS.
+  \item \textbf{Con tráfico, LS obtiene mejores resultados en las instancias evaluadas.} En T1 deja 155 vueltas sin atender frente a 293 de LPT y es igual o mejor en 26 de 35 rutas; en T2 es mejor en 31 de 35. Su desbalance es 35--44\,\% menor.
+  \item \textbf{El tráfico reduce la atención:} con LS, la proporción de vueltas atendidas pasa de 98.2\,\% (T0) a 96.7\,\% (T1) y 94.6\,\% (T2). En T1 la conducción total casi no cambia (+0.8\,\%), porque el perfil solo redistribuye el tiempo; en T2 aumenta 13.4\,\%.
+  \item \textbf{Las vueltas no atendidas sin tráfico se concentran en rutas saturadas:} RTU-22 (21; $\rho = 1.02$), RTI-02 (15; $\rho = 0.87$), RTU-01 (12; $\rho = 0.79$) y RTU-05 (7; $\rho = 0.82$).
+  \item \textbf{Tiempo de ejecución:} cada configuración resuelve las 35 rutas en menos de 0.7\,s (unos 20\,ms por ruta).
+\end{itemize}
+
+\subsection{Contraste con las hipótesis}
+\begin{table}[H]
+\centering\small
+\caption{Contraste preliminar de hipótesis.}
+\begin{tabularx}{\textwidth}{L{4.8cm}YL{3.0cm}}
+\toprule
+Hipótesis & Resultado preliminar & Estado \\
+\midrule
+H1: LS = LPT sin tráfico; LS mejor con tráfico & Idénticos en T0; LS mejor en T1 y T2 & Se cumple en las instancias evaluadas \\
+H2: efecto moderado de T1 y marcado de T2 & +68 vueltas no atendidas en T1 (+1.4\,pp) y +168 en T2 (+3.5\,pp) respecto de T0 & Se cumple \\
+H3: no atendidas concentradas en rutas de alta $\rho$ & Las 4 rutas con más vueltas no atendidas tienen $\rho \ge 0.79$ & Se cumple \\
+\bottomrule
+\end{tabularx}
+\end{table}

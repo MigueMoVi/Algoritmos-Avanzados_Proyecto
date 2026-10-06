@@ -1,0 +1,67 @@
+\section{Introducción}
+
+\subsection{Contexto}
+El transporte urbano de Cusco opera mediante empresas que atienden una ruta fija con su propia flota. Cada día, la empresa debe decidir qué bus realiza cada vuelta y a qué hora sale, respetando la frecuencia de servicio, el descanso del personal y una jornada limitada. Una mala asignación concentra horas de conducción en algunos buses mientras otros quedan ociosos, y puede dejar sin cubrir salidas en las horas de mayor demanda (Ibarra-Rojas et al., 2015).
+
+\subsection{Problema}
+Dada una empresa/ruta con $M$ buses idénticos y un conjunto de vueltas con ventana de inicio, se busca \textbf{asignar cada vuelta a un bus de su propia ruta y fijar su hora de salida}. La solución debe respetar la jornada de 06:00 a 22:00, el almuerzo de cada bus y la duración de cada vuelta según el tráfico. Se busca atender la mayor cantidad de vueltas y, entre esas soluciones, minimizar la carga de conducción del bus más cargado ($\Lmax$).
+
+Sin ventanas ni tráfico, el problema corresponde al problema clásico de programación en máquinas paralelas idénticas, que es NP-difícil (Garey y Johnson, 1979). Las ventanas de inicio, el almuerzo y el tráfico lo hacen más restrictivo y justifican el uso de heurísticas eficientes evaluadas experimentalmente.
+
+\subsection{Importancia de los tiempos de viaje dependientes de la hora}
+Una vuelta que sale en hora punta tarda más que la misma vuelta en horario valle. Si se supone una duración constante, se subestima la carga de los buses que trabajan en las puntas y se sobreestima la de los que trabajan en el valle; además, la hora de salida deja de influir en el resultado. Por eso el modelo representa la duración como una función $p_j(s_j)$ de la hora de salida, construida a partir de un perfil de congestión por franjas (Ichoua, Gendreau y Potvin, 2003).
+
+\subsection{Objetivos}
+\subsubsection*{Objetivo general}
+Desarrollar y evaluar experimentalmente una solución computacional basada en algoritmos de programación en máquinas idénticas para asignar las vueltas de las rutas de transporte urbano de Cusco, considerando ventanas de inicio, almuerzo y tiempos de viaje dependientes del tráfico.
+
+\subsubsection*{Objetivos específicos}
+\begin{enumerate}
+  \item Formular el problema con entradas, salidas, restricciones, supuestos, función objetivo y un modelo explícito de tráfico.
+  \item Estudiar de forma autónoma los fundamentos de programación en máquinas paralelas y de tiempos de viaje dependientes del tiempo.
+  \item Implementar List Scheduling y LPT adaptados a ventanas, almuerzo y tráfico.
+  \item Validar la corrección mediante un verificador de restricciones, una instancia resuelta a mano y un plan de pruebas.
+  \item Comparar preliminarmente LS y LPT en las 35 rutas experimentales y en tres escenarios de tráfico.
+  \item Analizar críticamente los resultados, los supuestos y las limitaciones.
+\end{enumerate}
+
+\subsection{Metodología general}
+\begin{enumerate}
+  \item \textbf{Formulación:} modelo de máquinas idénticas con ventanas, almuerzo y tiempo de viaje $p_j(s_j)$.
+  \item \textbf{Datos:} construcción de instancias reproducibles a partir de los parámetros de 35 empresas/rutas y de supuestos experimentales explícitos.
+  \item \textbf{Diseño e implementación:} List Scheduling y LPT con inserción en huecos de la línea de tiempo de cada bus.
+  \item \textbf{Validación:} verificador independiente, cálculo manual y pruebas automatizadas.
+  \item \textbf{Experimentación preliminar:} comparación de LS y LPT sobre las 35 rutas en tres escenarios de tráfico.
+\end{enumerate}
+La metodología global del proyecto contempla además, en etapas posteriores, la comparación con métodos exactos de referencia (Ramificación y Poda y CP-SAT) en instancias pequeñas y la evaluación de la robustez ante la variabilidad del tráfico. En la presente Entrega 1 se implementan y comparan List Scheduling y LPT.
+
+\subsection{Alcance y delimitación}
+\textbf{Incluye:}
+\begin{itemize}
+  \item 35 empresas/rutas experimentales, cada una como instancia independiente;
+  \item los buses de una misma ruta como máquinas idénticas;
+  \item las vueltas completas origen $\to$ destino $\to$ origen como trabajos;
+  \item ventanas de inicio para cada vuelta;
+  \item una jornada de operación de 06:00 a 22:00;
+  \item un periodo de almuerzo de 2\,h por bus;
+  \item tiempos de viaje dependientes de la hora mediante perfiles de tráfico experimentales;
+  \item List Scheduling (LS);
+  \item Longest Processing Time (LPT);
+  \item un prototipo ejecutable;
+  \item la validación de las soluciones;
+  \item una experimentación inicial reproducible.
+\end{itemize}
+
+\textbf{No incluye en esta etapa:}
+\begin{itemize}
+  \item el cambio de buses entre rutas;
+  \item el ruteo de vehículos;
+  \item datos de GPS en tiempo real;
+  \item la simulación microscópica de tráfico (Lopez et al., 2018);
+  \item el modelamiento de semáforos o de la infraestructura vial;
+  \item Ramificación y Poda y CP-SAT completamente desarrollados;
+  \item el análisis experimental completo del proyecto final.
+\end{itemize}
+
+\subsection{Organización del documento}
+La sección~\ref{sec:fundamentos} resume los fundamentos y el aprendizaje autónomo, y la~\ref{sec:stack} el stack tecnológico. La sección~\ref{sec:formulacion} formula el problema, la~\ref{sec:diseno} presenta el diseño algorítmico de LS y LPT y la~\ref{sec:sistema} el diseño del sistema. La sección~\ref{sec:manual} resuelve una instancia pequeña paso a paso, la~\ref{sec:pruebas} presenta el plan de pruebas y la~\ref{sec:metodologia} la metodología experimental. La sección~\ref{sec:resultados} muestra el prototipo y los resultados preliminares, la~\ref{sec:discusion} los analiza y la~\ref{sec:conclusiones} presenta las conclusiones de esta entrega.

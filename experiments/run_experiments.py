@@ -1,6 +1,6 @@
 """Experimento preliminar de la Entrega 1 (reproducible).
 
-    python -m sched build
+    python -m bus_sched build
     python experiments/run_experiments.py
 
 E1  35 rutas × {LS, LPT} × tráfico {T0, T1, T2}
@@ -22,13 +22,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 
-from sched.algorithms import list_scheduling, lpt  # noqa: E402
-from sched.builder import manual_instance  # noqa: E402
-from sched.metrics import compute_metrics, lower_bound  # noqa: E402
-from sched.model import Instance  # noqa: E402
-from sched.traffic import get_profile  # noqa: E402
-from sched.validator import validate  # noqa: E402
-from sched.viz import gantt  # noqa: E402
+from bus_sched.algorithms import list_scheduling, lpt  # noqa: E402
+from bus_sched.builder import manual_instance  # noqa: E402
+from bus_sched.metrics import compute_metrics, lower_bound  # noqa: E402
+from bus_sched.model import Instance  # noqa: E402
+from bus_sched.traffic import get_profile  # noqa: E402
+from bus_sched.validator import validate  # noqa: E402
+from bus_sched.viz import gantt  # noqa: E402
 
 RES = ROOT / "results"
 RES.mkdir(exist_ok=True)
@@ -44,7 +44,7 @@ ALGS = {"LS": list_scheduling, "LPT": lpt}
 def routes() -> list[Instance]:
     files = sorted((ROOT / "data" / "instances").glob("RT*.json"))
     if not files:
-        sys.exit("Ejecute primero: python -m sched build")
+        sys.exit("Ejecute primero: python -m bus_sched build")
     return [Instance.load(f) for f in files]
 
 

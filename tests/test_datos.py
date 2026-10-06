@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 
-from sched.algorithms import list_scheduling
-from sched.builder import from_excel, random_instance, window_policy_jobs
-from sched.model import Instance
-from sched.traffic import get_profile
+from bus_sched.algorithms import list_scheduling
+from bus_sched.builder import from_excel, random_instance, window_policy_jobs
+from bus_sched.model import Instance
+from bus_sched.traffic import get_profile
 
 ROOT = Path(__file__).resolve().parents[1]
 EXCEL = ROOT / "data" / "raw" / "tabla_proyecto_35_rutas.xlsx"

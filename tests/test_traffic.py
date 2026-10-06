@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from sched.traffic import Band, TrafficProfile, get_profile
+from bus_sched.traffic import Band, TrafficProfile, get_profile
 
 
 def test_t0_duracion_constante():

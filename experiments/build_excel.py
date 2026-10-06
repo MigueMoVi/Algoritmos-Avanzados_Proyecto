@@ -19,11 +19,11 @@ import pandas as pd  # noqa: E402
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side  # noqa: E402
 from openpyxl.utils import get_column_letter  # noqa: E402
 
-from sched.algorithms import list_scheduling, lpt  # noqa: E402
-from sched.builder import from_excel, manual_instance  # noqa: E402
-from sched.metrics import lower_bound  # noqa: E402
-from sched.timeutil import min_to_hhmm  # noqa: E402
-from sched.traffic import RAW_BANDS, get_profile  # noqa: E402
+from bus_sched.algorithms import list_scheduling, lpt  # noqa: E402
+from bus_sched.builder import from_excel, manual_instance  # noqa: E402
+from bus_sched.metrics import lower_bound  # noqa: E402
+from bus_sched.timeutil import min_to_hhmm  # noqa: E402
+from bus_sched.traffic import RAW_BANDS, get_profile  # noqa: E402
 
 SRC = ROOT / "data" / "raw" / "tabla_proyecto_35_rutas.xlsx"
 OUT = ROOT / "results" / "Tabla_35_Rutas_Entrega1.xlsx"
@@ -161,7 +161,7 @@ def sheet_calculadora(wb):
     ws[f"A{lr + 6}"] = "Verificación con el programa (salida 06:00, base 90, T2):"
     p = get_profile("T2").travel_time(360, 90)
     ws[f"B{lr + 6}"] = round(p, 4)
-    ws[f"C{lr + 6}"] = "← valor de sched.traffic.travel_time(360, 90); debe coincidir con B" + str(lr + 2)
+    ws[f"C{lr + 6}"] = "← valor de bus_sched.traffic.travel_time(360, 90); debe coincidir con B" + str(lr + 2)
     ws[f"C{lr + 6}"].font = NOTE
     for r in (lr + 2, lr + 3, lr + 4, lr + 6):
         ws.cell(r, 1).font = BOLD
@@ -221,7 +221,7 @@ def sheet_manual(wb):
     ws["A1"] = "INSTANCIA MANUAL – 3 buses, 8 vueltas, duración base 90 min, tráfico T2"
     ws["A1"].font = TITLE
     ws["A2"] = ("Almuerzo de 2 h: B1 inicia entre 10:30 y 11:30, B2 entre 12:00 y 13:00, B3 entre "
-                "13:30 y 14:30. Asignaciones producidas por el programa (python -m sched demo --traffic T2).")
+                "13:30 y 14:30. Asignaciones producidas por el programa (python -m bus_sched demo --traffic T2).")
     ws["A2"].font = NOTE
     sols = {"LS": list_scheduling(inst, t2), "LPT": lpt(inst, t2)}
     header(ws, 4, ["Vuelta", "Duración base (min)", "Ventana inicio mín.", "Ventana inicio máx.",

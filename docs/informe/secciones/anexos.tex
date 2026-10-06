@@ -1,0 +1,63 @@
+\section{Manual de instalación y uso}\label{anx:manual}
+\textbf{Requisitos:} Python $\ge$ 3.10, en Windows, Linux o macOS.
+\begin{lstlisting}
+git clone <URL-del-repositorio> && cd transporte-cusco-scheduling
+python -m venv .venv
+source .venv/bin/activate              # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+pip install -e .
+
+python -m bus_sched build              # genera data/instances/*.json (35 rutas + DEMO)
+python -m bus_sched profiles           # muestra los perfiles T0, T1 y T2
+python -m bus_sched demo --traffic T2  # instancia manual con LS y LPT
+python -m bus_sched run --route RTU-05 --alg ls  --traffic T1 --gantt
+python -m bus_sched run --route RTU-05 --alg lpt --traffic T1
+python experiments/run_experiments.py  # experimento E1
+python experiments/build_excel.py      # Excel de la entrega
+python experiments/export_latex.py     # tablas y figuras de este informe
+python -m pytest -q                    # pruebas
+\end{lstlisting}
+
+\begin{table}[H]
+\centering\small
+\caption{Parámetros de la línea de comandos.}
+\begin{tabularx}{\textwidth}{L{4.2cm}L{5.2cm}Y}
+\toprule
+Parámetro & Valores & Efecto \\
+\midrule
+\texttt{--route} / \texttt{--instance} & código de ruta, DEMO o archivo JSON & Instancia a resolver \\
+\texttt{--alg} & \texttt{ls} · \texttt{lpt} & Algoritmo de la Entrega 1 \\
+\texttt{--traffic} & T0 · T1 · T2 · archivo.json & Perfil de tráfico \\
+\texttt{--gantt}, \texttt{--out} & --- & Diagrama de Gantt y ruta del CSV de salida \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Contribuciones y bitácora}\label{anx:contrib}
+R = responsable, A = apoyo, V = revisión. La distribución se contrasta con el historial del repositorio.
+\begin{table}[H]
+\centering\small
+\caption{Matriz de contribuciones.}
+\begin{tabular}{lcccc}
+\toprule
+Componente & Aguilar & Choque & Huacani & Moreano \\
+\midrule
+Formulación y modelo de tráfico & R & V & V & A \\
+Modelo de datos y línea de tiempo & R & A & V & \\
+List Scheduling y LPT & A & R & V & \\
+Validador, métricas y pruebas & A & A & R & A \\
+Datos, Excel e instancias & V & & & R \\
+Experimento E1 y gráficos & A & & V & R \\
+Ejemplo manual & A & R & R & V \\
+Informe & R & A & A & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+Cada integrante mantiene una bitácora individual en \texttt{docs/bitacora/}, con una fila por sesión de trabajo: fecha, conocimiento trabajado, actividad, fuente, lo aprendido, dónde se aplicó (archivo o commit), dificultad y solución, y horas.
+
+\section{Resultados por ruta}\label{anx:rutas}
+$\rho$ = saturación de la flota; NA = vueltas no atendidas; $\Lmax$ en horas. Datos completos en \texttt{results/E1\_35\_rutas.csv} y en la hoja \emph{Resultados por ruta} del Excel.
+
+\input{tablas/anexo_rutas}
+
+\captura[6cm]{excel_resultados_por_ruta.png}{Hoja \emph{Resultados por ruta} del Excel de la entrega.}{fig:cap-excel-rutas}

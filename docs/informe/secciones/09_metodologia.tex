@@ -1,0 +1,38 @@
+\section{Metodología experimental}\label{sec:metodologia}
+
+\subsection{Preguntas e hipótesis}
+\begin{table}[H]
+\centering\small
+\caption{Preguntas de evaluación e hipótesis de la Entrega 1.}
+\begin{tabularx}{\textwidth}{cL{6.0cm}Y}
+\toprule
+\# & Pregunta & Hipótesis \\
+\midrule
+Q1 & ¿Qué estrategia atiende más vueltas y obtiene menor $\Lmax$? & H1: sin tráfico LS y LPT coinciden (las vueltas de una ruta duran lo mismo); con tráfico LS supera a LPT. \\
+Q2 & ¿Cómo afecta el tráfico a la cantidad de vueltas atendidas? & H2: T1 tiene un efecto moderado; T2 reduce marcadamente la atención. \\
+Q3 & ¿Qué rutas son más difíciles de programar? & H3: las vueltas no atendidas se concentran en las rutas de mayor saturación $\rho$. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Experimento E1: instancias, variables y métricas}
+\begin{itemize}
+  \item \textbf{Instancias:} las 35 rutas experimentales (4\,733 vueltas y 1\,080 buses).
+  \item \textbf{Variables:} algoritmo \{LS, LPT\} $\times$ perfil de tráfico \{T0, T1, T2\}, es decir, 6 configuraciones por ruta.
+  \item \textbf{Métricas principales} (función objetivo): vueltas no atendidas $U$ y carga máxima $\Lmax$.
+  \item \textbf{Métricas complementarias:} brecha de $\Lmax$ respecto de la cota inferior de las vueltas atendidas, desbalance $\Lmax - L_{\min}$, sobrecosto por tráfico $\bigl(\sum_j p_j(s_j) - \sum_j \pbar_j\bigr) / \sum_j \pbar_j$, tiempo de ejecución y violaciones detectadas por el validador.
+\end{itemize}
+La metodología global del proyecto prevé, en etapas posteriores, la comparación con los mecanismos de referencia en instancias pequeñas, el análisis de escalabilidad y la evaluación de la robustez ante la variabilidad del tráfico. Esos análisis no forman parte de esta entrega.
+
+\subsection{Entorno y procedimiento reproducible}
+\begin{itemize}
+  \item Hardware: Intel Xeon 2.10\,GHz (2 núcleos), Linux. Software: Python 3.13, pandas 3.0, matplotlib 3.11, openpyxl 3.1, pytest.
+  \item Procedimiento (desde la raíz del repositorio):
+\begin{lstlisting}
+python -m bus_sched build              # genera las 35 instancias JSON
+python experiments/run_experiments.py  # E1 -> results/E1_35_rutas.csv, E1_resumen.csv y figuras
+python experiments/build_excel.py      # Excel de la entrega
+python experiments/export_latex.py     # tablas y figuras de este informe
+\end{lstlisting}
+  \item Los algoritmos son deterministas: repetir el procedimiento produce los mismos resultados (salvo los tiempos de ejecución).
+\end{itemize}

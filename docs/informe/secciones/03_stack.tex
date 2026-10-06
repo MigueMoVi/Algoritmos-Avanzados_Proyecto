@@ -1,0 +1,22 @@
+\section{Stack tecnológico}\label{sec:stack}
+Las herramientas se eligieron por su pertinencia para el problema, su instalación libre de licencias (reproducibilidad) y su integración con Python.
+
+\begin{table}[H]
+\centering\small
+\caption{Stack tecnológico.}
+\begin{tabularx}{\textwidth}{L{3.2cm}L{4.6cm}Y}
+\toprule
+Tecnología & Función & Justificación \\
+\midrule
+Python 3 & Lenguaje de implementación (paquete \texttt{bus\_sched}) & Lenguaje de referencia del curso; LS y LPT resuelven cada ruta en milisegundos. \\
+Git / GitHub & Control de versiones & Historial del trabajo y de las contribuciones de cada integrante. \\
+CSV / JSON & Instancias, perfiles de tráfico y resultados & Formatos abiertos, legibles y reproducibles. \\
+openpyxl / pandas & Lectura del Excel del proyecto y análisis de resultados & Permiten leer los parámetros, validar los datos y generar tablas. \\
+matplotlib & Gráficos y diagramas de Gantt & Figuras reproducibles de los resultados. \\
+pytest & Pruebas automatizadas & Casos parametrizados y verificación continua. \\
+Jupyter Notebook & Demostración del prototipo & Ejecución paso a paso (también en Google Colab). \\
+\LaTeX & Informe & Documento reproducible; las tablas de resultados se generan desde el programa. \\
+OR-Tools (CP-SAT) & Prevista para la referencia exacta posterior & Libre; modela intervalos sin solapamiento y duraciones que dependen del inicio. \\
+\bottomrule
+\end{tabularx}
+\end{table}

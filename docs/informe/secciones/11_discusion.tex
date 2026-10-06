@@ -1,0 +1,17 @@
+\section{Discusión y limitaciones}\label{sec:discusion}
+
+\subsection{Interpretación}
+La garantía teórica de LPT supone que cualquier trabajo puede ejecutarse en cualquier momento, de modo que solo importa su tamaño. Con ventanas de inicio, en cambio, el orden de procesamiento determina la factibilidad. Cuando las ventanas son estrechas, el problema se parece a la partición de intervalos, donde procesar los intervalos por hora de inicio es la estrategia óptima en número de máquinas (Kolen et al., 2007). LS conserva ese orden temporal; LPT lo rompe al insertar primero vueltas de la tarde y dejar huecos fragmentados en la mañana.
+
+Con tráfico, además, la vuelta ``más larga'' es la que cae en hora punta, así que LPT termina ordenando por congestión y no por tamaño, y concentra vueltas de punta en los mismos buses. El mayor desbalance de LPT lo confirma (2.53\,h frente a 1.65\,h en T1).
+
+El ejemplo manual muestra también que la hora de salida dentro de la ventana influye en el tiempo de viaje (J4 tarda 103.85\,min si sale a las 08:00 y 97.62\,min si sale a las 08:27). LS y LPT eligen siempre la salida factible más temprana; cuantificar cuánto se gana eligiendo otra salida corresponde a la comparación con los mecanismos de referencia prevista para una etapa posterior.
+
+\subsection{Limitaciones y dificultades pendientes}
+\begin{itemize}
+  \item \textbf{Parámetros experimentales.} Las ventanas, los turnos de almuerzo y los factores de tráfico son supuestos definidos por el grupo; los resultados comparan algoritmos y no predicen la operación real.
+  \item \textbf{Datos de referencia.} La tabla de 2020 es un documento secundario y representa una jornada típica.
+  \item \textbf{Calidad de las heurísticas.} La brecha de LS respecto de la cota inferior es de 10--14\,\%. La cota puede ser poco ajustada, por lo que la distancia real al óptimo debe medirse con los mecanismos de referencia.
+  \item \textbf{Variabilidad del tráfico.} En esta entrega el tráfico es determinístico por escenario; el efecto de las variaciones aleatorias de los tiempos de viaje no se ha evaluado.
+  \item \textbf{Rutas saturadas.} En rutas con $\rho$ cercano o mayor que 1, ninguna asignación puede atender todas las vueltas; el resultado depende de la capacidad de la flota y no solo del algoritmo.
+\end{itemize}

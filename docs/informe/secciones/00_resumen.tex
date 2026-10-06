@@ -1,0 +1,13 @@
+\section*{Resumen}
+\addcontentsline{toc}{section}{Resumen}
+
+Este trabajo aborda la \textbf{asignación de vueltas a los buses de una misma ruta} del transporte urbano de Cusco, formulada como un problema de programación de trabajos en máquinas paralelas idénticas: cada bus es una máquina y cada vuelta origen--destino--origen es un trabajo. El objetivo es asignar cada vuelta a un bus de su propia flota y fijar su hora de salida para atender la mayor cantidad de vueltas y, entre esas soluciones, minimizar la carga máxima de conducción por bus ($\Lmax$). El modelo respeta ventanas de inicio, una jornada de 06:00 a 22:00 y un almuerzo de dos horas por bus.
+
+El tráfico se incorpora mediante un tiempo de viaje $p_j(s_j)$ que depende de la hora de salida $s_j$. Se calcula con un perfil de congestión por franjas horarias, con velocidad constante en cada franja, de modo que salir más tarde nunca implica llegar antes (propiedad FIFO). Se definen tres escenarios experimentales: sin tráfico (T0), perfil normalizado (T1) y perfil pesimista (T2). Los factores de congestión son parámetros definidos por el grupo y no mediciones oficiales.
+
+Se implementaron en Python las heurísticas \textbf{List Scheduling (LS)} y \textbf{LPT} adaptadas a ventanas, almuerzo y tráfico, junto con un verificador independiente de restricciones y un conjunto de pruebas automatizadas. La experimentación preliminar usa 35 empresas/rutas de la fuente de referencia (4\,733 vueltas) en los tres escenarios de tráfico.
+
+Los resultados preliminares muestran que, sin tráfico, LS y LPT producen la misma solución. Con tráfico, LS obtiene mejores resultados en las instancias evaluadas: en el escenario T1 deja 155 vueltas sin atender frente a 293 de LPT, y su brecha media de $\Lmax$ respecto de la cota inferior es 13.6\,\% frente a 19.4\,\%. Estos resultados indican que, cuando las vueltas tienen ventanas de inicio y duraciones dependientes de la hora, procesarlas en orden temporal es más adecuado que priorizar las de mayor duración. El prototipo es ejecutable y reproducible, y muestra la viabilidad del enfoque.
+
+\textbf{Palabras clave:} máquinas paralelas idénticas, List Scheduling, LPT, tiempos de viaje dependientes del tiempo, ventanas de inicio, transporte urbano.
+\clearpage

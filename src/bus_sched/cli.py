@@ -1,17 +1,17 @@
 """Interfaz de línea de comandos.
 
 Entrega 1 (algoritmos implementados y evaluados: LS y LPT):
-    python -m sched build                       # Excel -> data/instances/*.json (35 rutas)
-    python -m sched profiles                    # perfiles de tráfico T0/T1/T2
-    python -m sched demo --traffic T2           # ejemplo manual con LS y LPT
-    python -m sched run --route RTI-01 --alg ls --traffic T1 [--gantt]
-    python -m sched run --instance mi.json --alg lpt
+    python -m bus_sched build                       # Excel -> data/instances/*.json (35 rutas)
+    python -m bus_sched profiles                    # perfiles de tráfico T0/T1/T2
+    python -m bus_sched demo --traffic T2           # ejemplo manual con LS y LPT
+    python -m bus_sched run --route RTI-01 --alg ls --traffic T1 [--gantt]
+    python -m bus_sched run --instance mi.json --alg lpt
 
 Mecanismos de referencia previstos para etapas posteriores (prototipos, no
 forman parte de la evaluación de la Entrega 1):
-    python -m sched run --instance pequeña.json --alg bnb | cpsat
-    python -m sched demo --referencia           # agrega B&B y CP-SAT al ejemplo manual
-    python -m sched simulate ...                # evaluación de robustez (Monte Carlo)
+    python -m bus_sched run --instance pequeña.json --alg bnb | cpsat
+    python -m bus_sched demo --referencia           # agrega B&B y CP-SAT al ejemplo manual
+    python -m bus_sched simulate ...                # evaluación de robustez (Monte Carlo)
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ def _load_instance(args) -> Instance:
         return manual_instance()
     p = DATA / "instances" / f"{args.route}.json"
     if not p.exists():
-        sys.exit(f"No existe {p}. Ejecute primero: python -m sched build")
+        sys.exit(f"No existe {p}. Ejecute primero: python -m bus_sched build")
     return Instance.load(p)
 
 
@@ -150,7 +150,7 @@ def cmd_profiles(args) -> None:
 
 
 def main(argv=None) -> None:
-    ap = argparse.ArgumentParser(prog="sched", description=__doc__,
+    ap = argparse.ArgumentParser(prog="bus_sched", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
 

@@ -1,0 +1,53 @@
+\section{Fundamentos y aprendizaje autónomo}\label{sec:fundamentos}
+
+\subsection{Conceptos y algoritmos}
+\textbf{Programación en máquinas paralelas idénticas.} $n$ trabajos con duración $p_j$ se reparten entre $m$ máquinas idénticas, y cada trabajo se ejecuta completo en una sola máquina (Pinedo, 2016). En la versión clásica se minimiza el instante en que termina la última máquina; como en esa versión no hay restricciones temporales, ese instante coincide con la carga de la máquina más cargada. Por eso, en este proyecto la medida de equilibrio es la \textbf{carga máxima $\Lmax$}, definida en la sección~\ref{sec:objetivo}.
+
+\textbf{List Scheduling (LS)} recorre los trabajos en un orden dado y asigna cada uno a la máquina menos cargada. Sin restricciones temporales, su carga máxima es a lo sumo $(2 - 1/m)$ veces el óptimo (Graham, 1966). \textbf{LPT} (\emph{Longest Processing Time first}) aplica la misma regla después de ordenar los trabajos de mayor a menor duración, y mejora la garantía a $(4/3 - 1/(3m))$ veces el óptimo (Graham, 1969). Estas garantías suponen que cualquier trabajo puede ejecutarse en cualquier momento; por eso no se trasladan directamente al problema con ventanas y tráfico y deben contrastarse experimentalmente.
+
+\textbf{Ventanas de inicio.} Si cada trabajo solo puede iniciar en un intervalo $[r_j, d_j]$, el problema se aproxima a la programación de intervalos, donde ya es difícil decidir si todos los trabajos caben (Kolen et al., 2007). El almuerzo convierte cada bus en una máquina con un periodo de indisponibilidad (Lee, 1996).
+
+\textbf{Tiempos dependientes del tiempo y tráfico.} Cuando la duración de un trabajo depende de su inicio (Gawiejnowicz, 2008), el tiempo de viaje puede calcularse dividiendo el día en franjas con velocidad constante e integrando la velocidad tramo por tramo (Ichoua, Gendreau y Potvin, 2003). El modelo cumple la \textbf{propiedad FIFO}: si $s_1 \le s_2$, entonces $s_1 + p(s_1) \le s_2 + p(s_2)$. Esta propiedad se usa en el diseño de los algoritmos (sección~\ref{sec:invariantes}).
+
+\textbf{Mecanismos de referencia (etapa posterior).} La Ramificación y Poda (Land y Doig, 1960) y la programación con restricciones de OR-Tools CP-SAT (Google, 2024) permiten obtener soluciones óptimas en instancias pequeñas. En el proyecto servirán como referencia para medir la calidad de LS y LPT; su uso se describe en la sección~\ref{sec:referencia}.
+
+\subsection{Fuentes y criterio de selección}
+Se usaron artículos con revisión por pares, libros de referencia y documentación oficial, seleccionados por su \textbf{pertinencia} para el modelo, su \textbf{confiabilidad} y la posibilidad de \textbf{verificar} sus resultados con los datos o las pruebas del proyecto.
+
+\begin{table}[H]
+\centering\small
+\caption{Fuentes principales y su uso.}
+\begin{tabularx}{\textwidth}{L{6.4cm}Y}
+\toprule
+Fuente & Uso en el proyecto \\
+\midrule
+Graham (1966, 1969); Pinedo (2016); Garey y Johnson (1979) & Definición del problema, garantías de LS y LPT y complejidad. \\
+Ichoua, Gendreau y Potvin (2003); Gawiejnowicz (2008) & Modelo de tráfico por franjas y propiedad FIFO. \\
+Lee (1996); Kolen et al. (2007) & Modelado del almuerzo y de las ventanas de inicio. \\
+Cormen et al. (2022) & Estructuras de datos de la línea de tiempo. \\
+Land y Doig (1960); documentación de OR-Tools & Mecanismos de referencia previstos. \\
+Tabla de flota operativa 2020 & Parámetros de las rutas (documento de referencia, no oficial). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Conocimientos adicionales y aprendizaje autónomo}
+El proyecto requirió conocimientos que no formaban parte del contenido previo del grupo. La tabla~\ref{tab:aprendizaje} resume qué se aprendió, para qué se usó y cómo se adquirió y verificó. Cada integrante registra sus actividades en una bitácora individual (Anexo~\ref{anx:contrib}).
+
+\begin{table}[H]
+\centering\small
+\caption{Conocimientos adicionales requeridos y forma de adquisición y verificación.}\label{tab:aprendizaje}
+\begin{tabularx}{\textwidth}{L{3.4cm}L{2.8cm}YL{1.9cm}}
+\toprule
+Conocimiento & Para qué se usó & Cómo se adquirió y verificó & Responsable \\
+\midrule
+Tiempos de viaje por franjas y FIFO & Modelo de tráfico $p_j(s_j)$ & Estudio de Ichoua et al.; cálculo manual; prueba automática de FIFO; hoja de cálculo de contraste & Aguilar \\
+Garantías de LS y LPT & Diseño y análisis de las heurísticas & Graham y Pinedo; reproducción del peor caso de LPT en una prueba & Choque \\
+Listas ordenadas con búsqueda binaria & Línea de tiempo de cada bus & Documentación de Python; Cormen et al. & Choque \\
+Pruebas con pytest & Plan de pruebas & Documentación oficial; casos básicos, límite y adversos & Huacani \\
+Validación de restricciones & Verificador independiente & Formulación del modelo; pruebas con soluciones alteradas & Huacani \\
+Lectura y validación de datos con openpyxl/pandas & Instancias y Excel & Documentación oficial; regla general de vueltas verificada contra la hoja de trabajos & Moreano \\
+Visualización con matplotlib & Diagramas de Gantt y gráficos & Documentación oficial & Moreano \\
+\bottomrule
+\end{tabularx}
+\end{table}

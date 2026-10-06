@@ -1,0 +1,9 @@
+\section{Conclusiones}\label{sec:conclusiones}
+\begin{enumerate}
+  \item Se formuló la asignación de vueltas a buses como un problema de máquinas paralelas idénticas con ventanas de inicio, almuerzo y tiempos de viaje $p_j(s_j)$ dependientes de la hora de salida, con objetivo lexicográfico: primero maximizar las vueltas atendidas y luego minimizar la carga máxima $\Lmax$.
+  \item El tráfico se incorporó mediante un perfil de congestión por franjas que cumple la propiedad FIFO, evaluado en tres escenarios experimentales.
+  \item Los resultados preliminares muestran que, sin tráfico, List Scheduling y LPT producen la misma solución, y que con tráfico LS atiende más vueltas y equilibra mejor la carga en las instancias evaluadas (en T1, 155 vueltas no atendidas frente a 293).
+  \item En las 35 rutas evaluadas, el tráfico pesimista reduce la proporción de vueltas atendidas con LS de 98.2\,\% a 94.6\,\% y aumenta la conducción total en 13.4\,\%.
+  \item La saturación de la flota ($\rho$) explica buena parte de las vueltas no atendidas; en RTU-22 la demanda de horas supera la capacidad de la flota.
+  \item El prototipo permite verificar el modelo de extremo a extremo: genera las instancias con una regla general, ejecuta LS y LPT, valida todas las restricciones y produce resultados reproducibles, lo que muestra la viabilidad del proyecto.
+\end{enumerate}

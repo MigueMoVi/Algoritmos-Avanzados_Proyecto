@@ -1,4 +1,4 @@
-"""sched: asignación de vueltas a buses de una misma ruta (máquinas idénticas)
+"""bus_sched: asignación de vueltas a buses de una misma ruta (máquinas idénticas)
 con ventanas de inicio, almuerzo escalonado y tiempos de viaje dependientes
 del tráfico.
 

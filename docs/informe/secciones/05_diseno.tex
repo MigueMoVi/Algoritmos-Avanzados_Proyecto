@@ -1,0 +1,148 @@
+\section{Diseño algorítmico}\label{sec:diseno}
+
+\subsection{Estrategias de la Entrega 1}
+Las dos estrategias de esta entrega, \textbf{List Scheduling (LS)} y \textbf{Longest Processing Time (LPT)}, comparten un esquema de lista con inserción en huecos. Se recorre una lista de vueltas en el orden propio de cada estrategia. Para cada vuelta se busca, en cada bus de la ruta, la salida factible más temprana que respete la ventana, la jornada y el almuerzo, y se elige el bus de menor carga acumulada. Si ningún bus puede atender la vuelta, esta queda registrada como no atendida.
+
+\begin{table}[H]
+\centering\small
+\caption{Estrategias implementadas en la Entrega 1.}
+\begin{tabularx}{\textwidth}{L{3.2cm}YL{3.2cm}L{3.0cm}}
+\toprule
+Estrategia & Orden de la lista & Selección del bus & Desempate \\
+\midrule
+\textbf{List Scheduling (LS)} & Inicio mínimo de ventana $r_j$ (y salida nominal) & Bus factible de menor carga acumulada & Salida más temprana; luego índice de bus \\
+\textbf{LPT} & Tiempo de viaje en la salida nominal, $p_j(\text{nominal}_j)$, de mayor a menor & Igual que LS & Igual que LS \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+En LPT, la duración que define el orden se evalúa en la salida nominal de cada vuelta. Con tráfico, la vuelta ``más larga'' es la que cae en hora punta; sin tráfico, todas las vueltas de una ruta duran lo mismo y el orden de LPT se desempata por $r_j$, que es el orden de LS.
+
+\subsection{Estructuras de datos}
+\begin{table}[H]
+\centering\small
+\caption{Estructuras de datos ($k$ = vueltas ya asignadas al bus).}
+\begin{tabularx}{\textwidth}{L{2.6cm}YL{4.6cm}}
+\toprule
+Estructura & Implementación & Operaciones y costo \\
+\midrule
+\texttt{Job} & Registro inmutable: id, ruta, $\pbar$, $r$, $d$, salida nominal & Acceso $O(1)$ \\
+\texttt{Bus} & Registro: id, ruta, ventana de almuerzo $[a, b]$, duración del almuerzo & Acceso $O(1)$ \\
+\texttt{TrafficProfile} & Lista ordenada de franjas (inicio, fin, factor) y factor fuera de franjas & \texttt{travel\_time} en $O(F)$, con $F = 7$ franjas \\
+\texttt{BusTimeline} & Listas ordenadas de inicios, fines y etiquetas de las vueltas del bus, más su carga & Recorrido de huecos $O(k)$; inserción con \texttt{bisect} $O(\log k)$ + desplazamiento $O(k)$ \\
+\texttt{Schedule} & Diccionario vuelta $\to$ (bus, salida, llegada), lista de no atendidas y almuerzos & Consulta $O(1)$ \\
+\texttt{Instance} & Vueltas, buses e índice por identificador & Lectura y escritura JSON $O(n + m)$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Se usa una lista ordenada con búsqueda binaria en lugar de un árbol de intervalos porque cada bus realiza a lo sumo unas seis vueltas al día. Con $k$ tan pequeño, el costo $O(k)$ es despreciable y el código es más fácil de verificar (Cormen et al., 2022).
+
+\subsection{Pseudocódigo}
+El pseudocódigo corresponde a las siguientes funciones del paquete \texttt{bus\_sched}:
+\begin{itemize}
+  \item Algoritmo~\ref{alg:tiempo}: \texttt{TrafficProfile.travel\_time} en \texttt{traffic.py};
+  \item Algoritmo~\ref{alg:hueco}: \texttt{BusTimeline.find\_slot} en \texttt{model.py};
+  \item Algoritmo~\ref{alg:greedy}: \texttt{greedy\_schedule}, \texttt{list\_scheduling} y \texttt{lpt} en \texttt{algorithms/greedy.py}.
+\end{itemize}
+
+\begin{algorithm}[H]
+\caption{Tiempo de viaje $p_j(s)$}\label{alg:tiempo}
+\begin{algorithmic}[1]
+\Function{TiempoViaje}{$s, \pbar$, franjas, $f_{\text{fuera}}$}
+  \State $\mathit{restante} \gets \pbar$;\; $t \gets s$
+  \ForAll{franja $(\tau_{\text{ini}}, \tau_{\text{fin}}, f)$ en orden, con $\tau_{\text{fin}} > s$}
+    \If{$t < \tau_{\text{ini}}$} \Comment{tramo sin franja definida}
+      \State $\mathit{cap} \gets (\tau_{\text{ini}} - t)/f_{\text{fuera}}$
+      \If{$\mathit{cap} \ge \mathit{restante}$} \Return $t + \mathit{restante}\cdot f_{\text{fuera}} - s$ \EndIf
+      \State $\mathit{restante} \gets \mathit{restante} - \mathit{cap}$;\; $t \gets \tau_{\text{ini}}$
+    \EndIf
+    \State $\mathit{cap} \gets (\tau_{\text{fin}} - t)/f$ \Comment{minutos base que caben en la franja}
+    \If{$\mathit{cap} \ge \mathit{restante}$} \Return $t + \mathit{restante}\cdot f - s$ \EndIf
+    \State $\mathit{restante} \gets \mathit{restante} - \mathit{cap}$;\; $t \gets \tau_{\text{fin}}$
+  \EndFor
+  \State \Return $t + \mathit{restante}\cdot f_{\text{fuera}} - s$ \Comment{después de la última franja}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Salida factible más temprana en un bus}\label{alg:hueco}
+\begin{algorithmic}[1]
+\Function{BuscarHueco}{bus, $j$, $p$}
+  \ForAll{hueco libre $[g_0, g_1]$ del bus, en orden cronológico}
+    \State $s_0 \gets \max(r_j, g_0)$
+    \If{$s_0 > d_j$} \Return \textsc{ninguno} \EndIf
+    \State $\mathit{cand} \gets [\,s_0\,]$
+    \If{$\max(g_0, a_{\text{bus}}) \le b_{\text{bus}}$} \Comment{el almuerzo podría ir en este hueco}
+      \State agregar $\max(s_0,\ \max(g_0, a_{\text{bus}}) + 120)$ a $\mathit{cand}$
+    \EndIf
+    \ForAll{$s \in \mathit{cand}$}
+      \If{$s > d_j$ \textbf{o} $s + p(s) > g_1$} \Break \Comment{FIFO: más tarde tampoco cabe} \EndIf
+      \If{el almuerzo aún cabe con $[s, s + p(s))$ ocupado} \Return $(s,\ s + p(s))$ \EndIf
+    \EndFor
+  \EndFor
+  \State \Return \textsc{ninguno}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{List Scheduling y LPT}\label{alg:greedy}
+\begin{algorithmic}[1]
+\Function{Greedy}{instancia, orden, perfil}
+  \ForAll{bus $i$} \State $L_i \gets 0$;\; \textit{línea}$_i \gets \emptyset$ \EndFor
+  \ForAll{vuelta $j$ en orden}
+    \State $p \gets (t \mapsto \textsc{TiempoViaje}(t, \pbar_j, \text{perfil}))$
+    \State $\mathit{mejor} \gets$ \textsc{ninguno}
+    \ForAll{bus $i$ de la ruta}
+      \State $h \gets \textsc{BuscarHueco}(i, j, p)$
+      \If{$h \ne$ \textsc{ninguno} \textbf{y} $(L_i, h.\mathit{inicio}, i) < \mathit{clave}(\mathit{mejor})$} \State $\mathit{mejor} \gets (i, h)$ \EndIf
+    \EndFor
+    \If{$\mathit{mejor} =$ \textsc{ninguno}} \State marcar $j$ como \texttt{NO\_ASIGNADO}
+    \Else \State insertar $j$ en \textit{línea}$_i$;\; $L_i \gets L_i + (h.\mathit{fin} - h.\mathit{inicio})$
+    \EndIf
+  \EndFor
+  \ForAll{bus $i$} \State ubicar el almuerzo en su inicio factible más temprano \EndFor
+\EndFunction
+\Statex
+\State \textsc{LS}: \textsc{Greedy} con las vueltas ordenadas por $(r_j,\ \text{nominal}_j,\ \text{id}_j)$
+\State \textsc{LPT}: \textsc{Greedy} con las vueltas ordenadas por $(-\textsc{TiempoViaje}(\text{nominal}_j, \pbar_j),\ r_j,\ \text{id}_j)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Invariantes y corrección}\label{sec:invariantes}
+\begin{itemize}
+  \item \textbf{I1 — Factibilidad parcial.} Tras cada inserción, la línea de tiempo de cada bus cumple ventana, jornada y no solapamiento, y conserva un hueco donde cabe el almuerzo. \textsc{BuscarHueco} solo acepta candidatos que mantienen esta condición, así que el invariante se conserva por inducción sobre las inserciones. Al final, el almuerzo se ubica en ese hueco.
+  \item \textbf{I2 — Salida más temprana.} Por la propiedad FIFO, $s \mapsto s + p(s)$ es no decreciente. Dentro de un hueco, el candidato más temprano termina antes que cualquier otro posterior; si ese no cabe, ninguno posterior cabe. Esto justifica el \textbf{romper} del Algoritmo~\ref{alg:hueco}.
+  \item \textbf{I3 — Conservación.} Toda vuelta termina asignada a exactamente un bus o registrada como no atendida.
+  \item \textbf{I4 — Cota válida.} Cada vuelta dura al menos $p^{\min}_j$ y la carga total se reparte entre $m$ buses, de modo que $LB(S) \le \Lmax$.
+\end{itemize}
+\textbf{Idea de corrección.} Por I1 e I3, la solución final satisface todas las restricciones de la sección~\ref{sec:restricciones}. Esto se comprueba además en cada ejecución con un validador independiente (sección~\ref{sec:validador}).
+
+\subsection{Complejidad}
+\begin{table}[H]
+\centering\small
+\caption{Complejidad de los componentes de la Entrega 1.}
+\begin{tabularx}{\textwidth}{L{3.8cm}L{3.6cm}L{1.6cm}Y}
+\toprule
+Componente & Tiempo & Espacio & Comentario \\
+\midrule
+\textsc{TiempoViaje} & $O(F)$ & $O(1)$ & $F = 7$ franjas \\
+\textsc{BuscarHueco} & $O(k)$ & $O(k)$ & $k \approx n/m$ vueltas por bus \\
+Ordenamiento (LS y LPT) & $O(n \log n)$ & $O(n)$ & LPT evalúa además $p_j(\text{nominal}_j)$ en $O(n F)$ \\
+LS y LPT completos & $O(n \log n + n\, m\, k)$ & $O(n + m)$ & Con $k \approx n/m$ queda $O(n^2)$ \\
+Validador & $O(n \log n)$ & $O(n)$ & Ordena por bus y revisa vecinos \\
+\bottomrule
+\end{tabularx}
+\end{table}
+En las rutas experimentales (hasta 166 vueltas y 44 buses), LS y LPT resuelven cada ruta en unos 20\,ms (sección~\ref{sec:e1}).
+
+\subsection{Mecanismos de referencia previstos}\label{sec:referencia}
+El proyecto contempla adicionalmente \textbf{Ramificación y Poda} y \textbf{CP-SAT} como mecanismos de referencia para la validación de instancias pequeñas. En la presente Entrega 1 se implementan y comparan List Scheduling y LPT.
+\begin{itemize}
+  \item \textbf{Propósito:} obtener la solución óptima de instancias pequeñas (del orden de 10 vueltas) para medir la distancia de LS y LPT al óptimo.
+  \item \textbf{Ramificación y Poda:} enumera las asignaciones vuelta $\to$ bus y descarta las ramas cuya cota inferior, del tipo de $LB(S)$, no puede mejorar la mejor solución conocida (Land y Doig, 1960).
+  \item \textbf{CP-SAT:} resuelve la formulación de la sección~\ref{sec:objetivo} con intervalos que no pueden solaparse y con duraciones que dependen de la hora de salida (Google, 2024).
+  \item \textbf{Lugar en la metodología:} se usarán en la etapa de evaluación experimental para contrastar las heurísticas. El repositorio contiene prototipos de ambos, separados de LS y LPT, que no forman parte de la evaluación de esta entrega.
+\end{itemize}

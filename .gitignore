@@ -8,3 +8,12 @@ results/*_LPT_*.csv
 results/*_BnB_*.csv
 results/*_CP-SAT_*.csv
 ~$*.xlsx
+
+# LaTeX
+docs/informe/*.aux
+docs/informe/*.log
+docs/informe/*.out
+docs/informe/*.toc
+docs/informe/*.fls
+docs/informe/*.fdb_latexmk
+docs/informe/*.synctex.gz

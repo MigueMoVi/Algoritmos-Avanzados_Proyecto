@@ -1,0 +1,49 @@
+\section{Plan de pruebas y validación}\label{sec:pruebas}
+
+\subsection{Validación de restricciones}\label{sec:validador}
+El módulo \texttt{validator.py} verifica cada solución sin usar las estructuras internas de los algoritmos. Recalcula: (1) que cada vuelta aparezca una sola vez, asignada o no atendida; (2) que el bus sea de la ruta; (3) la ventana; (4) la jornada; (5) que la duración coincida con $p_j(s_j)$; (6) que el almuerzo sea único, de 120\,min y dentro de su ventana; y (7) que no haya solapamientos. Cada ejecución desde la línea de comandos lo aplica y termina con error si encuentra violaciones.
+
+\subsection{Casos de prueba}
+{\small
+\begin{longtable}{L{2.9cm}L{6.4cm}L{5.4cm}}
+\caption{Plan de pruebas de la Entrega 1 (automatizado con pytest).}\label{tab:pruebas}\\
+\toprule
+Tipo & Caso & Resultado esperado \\
+\midrule\endfirsthead
+\toprule
+Tipo & Caso & Resultado esperado \\
+\midrule\endhead
+\bottomrule\endfoot
+Básico & Instancia manual con LS y LPT en T0, T1 y T2 & Soluciones válidas que atienden las 8 vueltas \\
+Básico & Cargas máximas de la instancia manual & T0: 270 (LS y LPT); T2: 329.0 (LS) y 333.2 (LPT) \\
+Básico & Asignación de cada vuelta en el ejemplo manual & Coincide con las trazas de la sección~\ref{sec:manual} \\
+Límite & Ventana de ancho cero ($r_j = d_j$) & Salida exactamente en $r_j$ \\
+Límite & Vuelta que termina exactamente a las 22:00 & Se acepta \\
+Límite & Un solo bus ($m = 1$) & Solución válida \\
+Límite & Duraciones iguales sin tráfico & LPT coincide con LS \\
+Adverso & 3 vueltas simultáneas y 1 bus & 2 vueltas no atendidas, sin violaciones \\
+Adverso & Peor caso clásico de LPT $\{3, 3, 2, 2, 2\}$\,h con $m = 2$ & LPT obtiene 7\,h (el óptimo es 6\,h) \\
+Ventanas & 80 vueltas con ventanas y tráfico T2 & Toda salida dentro de su ventana \\
+Tráfico & Duración asignada en la instancia manual & Igual a $p_j(s_j)$ del perfil \\
+Tráfico & Propiedad FIFO en pares aleatorios & $s_1 \le s_2 \Rightarrow$ llegada$_1 \le$ llegada$_2$ \\
+Tráfico & Cálculo de $p_{J1}(06{:}00)$ en T2 y media de T1 & 103.67\,min; media de T1 = 1 \\
+Tráfico & Carga total con T2 frente a T0 & Mayor con T2 \\
+Almuerzo & Vuelta que choca con un almuerzo fijo & Queda no atendida \\
+Almuerzo & Vuelta que choca con un almuerzo flexible & El almuerzo se desplaza y la vuelta se atiende \\
+Almuerzo & Almuerzo de cada bus & Dentro de su ventana y de 120\,min \\
+Validación de restricciones & Solución alterada a propósito & El validador la rechaza \\
+Validación de restricciones & Cota inferior frente a $\Lmax$ & $LB \le \Lmax$ \\
+Validación de restricciones & 400 vueltas y 60 buses & Solución válida; todas las vueltas contabilizadas \\
+Validación de datos & Lectura del Excel del proyecto & 35 rutas, 4\,733 vueltas, coinciden con la regla general \\
+\end{longtable}}
+
+\captura[5cm]{pytest.png}{Ejecución de las pruebas automatizadas (\texttt{python -m pytest -q}).}{fig:cap-pytest}
+
+\subsection{Verificación de las salidas}
+\begin{enumerate}
+  \item \textbf{Factibilidad:} el validador recalcula todas las restricciones en cada ejecución.
+  \item \textbf{Cálculo a mano:} la instancia de la sección~\ref{sec:manual} y la calculadora del Excel coinciden con el programa.
+  \item \textbf{Calidad:} la carga máxima se compara con la cota inferior $LB$ de las vueltas atendidas.
+  \item \textbf{Instancias nuevas:} cualquier instancia escrita en el formato de la sección~\ref{sec:sistema} se resuelve y valida con \texttt{python -m bus\_sched run --instance archivo.json}.
+\end{enumerate}
+La comparación con la solución exacta en instancias pequeñas corresponde a los mecanismos de referencia de la sección~\ref{sec:referencia}, previstos para una etapa posterior.

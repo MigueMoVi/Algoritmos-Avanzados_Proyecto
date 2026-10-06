@@ -1,0 +1,105 @@
+% =====================================================================
+% Preámbulo — Informe Entrega 1, Grupo 4, Algoritmos Avanzados (UNSAAC)
+% =====================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noquoting,es-tabla,es-nodecimaldot]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[a4paper,margin=2.5cm,headheight=14pt]{geometry}
+
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{booktabs,makecell,longtable,tabularx,multirow,array}
+\usepackage{float}
+\usepackage[font=small,labelfont={bf,color=guinda},format=hang]{caption}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+
+% ---------------------------------------------------------------- colores
+\definecolor{guinda}{HTML}{6E0F1D}
+\definecolor{dorado}{HTML}{B8860B}
+\definecolor{doradoclaro}{HTML}{F6EFE3}
+\definecolor{grisclaro}{HTML}{F3F3F3}
+
+% ---------------------------------------------------------------- títulos
+\titleformat{\section}{\Large\bfseries\color{guinda}}{\thesection.}{0.6em}{}[{\color{dorado}\titlerule[0.8pt]}]
+\titleformat{\subsection}{\large\bfseries\color{guinda}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{dorado!70!black}}{\thesubsubsection}{0.6em}{}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+
+% ---------------------------------------------------------------- encabezado
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\small\color{gray}UNSAAC · Algoritmos Avanzados · Grupo 4 · Entrega 1}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{dorado}\leaders\hrule height \headrulewidth\hfill}}
+
+% ---------------------------------------------------------------- texto
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+\setlist{itemsep=2pt,topsep=3pt}
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% ---------------------------------------------------------------- código
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{grisclaro},
+  frame=single, rulecolor=\color{grisclaro},
+  breaklines=true, columns=fullflexible, keepspaces=true,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1
+           {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+           {·}{{$\cdot$}}1 {→}{{$\to$}}1 {├}{{|}}1 {└}{{`}}1 {─}{{-}}1 {│}{{|}}1
+}
+
+% ---------------------------------------------------------------- pseudocódigo
+\floatname{algorithm}{Algoritmo}
+\renewcommand{\listalgorithmname}{Lista de algoritmos}
+\algrenewcommand\algorithmicrequire{\textbf{Entrada:}}
+\algrenewcommand\algorithmicensure{\textbf{Salida:}}
+\algrenewcommand\algorithmicfunction{\textbf{función}}
+\algrenewcommand\algorithmicif{\textbf{si}}
+\algrenewcommand\algorithmicthen{\textbf{entonces}}
+\algrenewcommand\algorithmicelse{\textbf{si no}}
+\algrenewcommand\algorithmicfor{\textbf{para}}
+\algrenewcommand\algorithmicforall{\textbf{para cada}}
+\algrenewcommand\algorithmicdo{\textbf{hacer}}
+\algrenewcommand\algorithmicreturn{\textbf{devolver}}
+\algrenewcommand\algorithmicwhile{\textbf{mientras}}
+\algnewcommand\Break{\textbf{romper}}
+
+% ---------------------------------------------------------------- notas
+\newtcolorbox{nota}[1][]{colback=doradoclaro,colframe=dorado,boxrule=0pt,leftrule=3pt,
+  arc=0pt,left=6pt,right=6pt,top=4pt,bottom=4pt,fontupper=\small,#1}
+
+% ---------------------------------------------------------------- capturas
+% \captura[alto]{archivo}{pie de figura}{etiqueta}
+% Si existe capturas/<archivo> se inserta la imagen; si no, se dibuja un
+% recuadro reservado con el nombre esperado del archivo.
+\newcommand{\captura}[4][6cm]{%
+  \begin{figure}[H]
+  \centering
+  \IfFileExists{capturas/#2}{%
+    \includegraphics[width=0.92\textwidth,height=#1,keepaspectratio]{capturas/#2}%
+  }{%
+    \fcolorbox{gray!60}{gray!5}{\parbox[c][#1][c]{0.9\textwidth}{\centering
+      {\color{gray}\large Espacio para captura}\\[6pt]
+      {\color{gray}\small #3}\\[8pt]
+      {\color{gray}\footnotesize Guardar la imagen como \texttt{capturas/\detokenize{#2}}}}}%
+  }
+  \caption{#3}\label{#4}
+  \end{figure}}
+
+\newcommand{\Lmax}{L_{\max}}
+\newcommand{\pbar}{\bar{p}}

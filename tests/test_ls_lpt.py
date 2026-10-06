@@ -1,12 +1,12 @@
 """Pruebas de List Scheduling y LPT (algoritmos de la Entrega 1)."""
 import pytest
 
-from sched.algorithms import list_scheduling, lpt
-from sched.builder import manual_instance, random_instance
-from sched.metrics import compute_metrics, lower_bound
-from sched.model import Bus, Instance, Job, make_buses
-from sched.traffic import get_profile
-from sched.validator import validate
+from bus_sched.algorithms import list_scheduling, lpt
+from bus_sched.builder import manual_instance, random_instance
+from bus_sched.metrics import compute_metrics, lower_bound
+from bus_sched.model import Bus, Instance, Job, make_buses
+from bus_sched.traffic import get_profile
+from bus_sched.validator import validate
 
 T0, T1, T2 = (get_profile(x) for x in ("T0", "T1", "T2"))
 ALGS = (list_scheduling, lpt)

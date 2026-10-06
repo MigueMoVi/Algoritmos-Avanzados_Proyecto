@@ -3,11 +3,11 @@
 de la Entrega 1; se mantienen para que el prototipo siga siendo correcto."""
 import pytest
 
-from sched.algorithms import branch_and_bound, list_scheduling, lpt
-from sched.builder import manual_instance, random_instance
-from sched.simulation import simulate
-from sched.traffic import get_profile
-from sched.validator import validate
+from bus_sched.algorithms import branch_and_bound, list_scheduling, lpt
+from bus_sched.builder import manual_instance, random_instance
+from bus_sched.simulation import simulate
+from bus_sched.traffic import get_profile
+from bus_sched.validator import validate
 
 T0, T1, T2 = (get_profile(x) for x in ("T0", "T1", "T2"))
 
@@ -27,7 +27,7 @@ def test_bnb_nunca_peor_que_ls_ni_lpt():
 
 def test_cpsat_valido_y_no_peor_que_bnb():
     pytest.importorskip("ortools")
-    from sched.algorithms.cpsat import cpsat_solve
+    from bus_sched.algorithms.cpsat import cpsat_solve
     inst = manual_instance()
     c = cpsat_solve(inst, T2, time_limit_s=20)
     assert validate(c, T2) == [] and c.extra["status"] == "OPTIMAL"

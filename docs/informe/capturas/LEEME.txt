@@ -1,0 +1,21 @@
+Capturas del informe
+====================
+
+Guarde aquí las capturas con EXACTAMENTE estos nombres (PNG o JPG renombrado a .png).
+Al recompilar main.tex se insertan solas; si un archivo no existe, el informe
+muestra un recuadro reservado con el nombre esperado.
+
+  excel_calculadora_vuelta.png   §7.2  hoja "Calculadora vuelta" del Excel
+  demo_manual_T2.png             §7.5  salida de: python -m bus_sched demo --traffic T2
+  excel_instancia_manual.png     §7.5  hoja "Instancia manual" del Excel
+  pytest.png                     §8.2  salida de: python -m pytest -q
+  repositorio_github.png         §10.1 página del repositorio en GitHub
+  build_instancias.png           §10.1 salida de: python -m bus_sched build
+  run_ls_RTI-01.png              §10.1 salida de: python -m bus_sched run --route RTI-01 --alg ls --traffic T1
+  run_lpt_RTI-01.png             §10.1 salida de: python -m bus_sched run --route RTI-01 --alg lpt --traffic T1
+  run_experiments_E1.png         §10.2 salida de: python experiments/run_experiments.py
+  excel_resultados_por_ruta.png  Anexo C hoja "Resultados por ruta" del Excel
+
+Para agregar otra captura en cualquier sección:
+  \captura[6cm]{nombre_archivo.png}{Pie de figura}{fig:etiqueta}
+(el primer argumento opcional es el alto máximo del recuadro o de la imagen).
