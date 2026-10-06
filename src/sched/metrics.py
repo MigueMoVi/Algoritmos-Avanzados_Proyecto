@@ -6,11 +6,13 @@ from .model import Schedule
 from .traffic import TrafficProfile
 
 
-def lower_bound(sch_or_inst, profile: TrafficProfile) -> float:
+def lower_bound(sch_or_inst, profile: TrafficProfile, job_ids=None) -> float:
     """Cota inferior de L_max: max( max_j pmin_j , sum_j pmin_j / m ),
-    con pmin_j = menor duración de j dentro de su ventana."""
+    con pmin_j = menor duración de j dentro de su ventana. Si se da job_ids,
+    la cota se calcula sólo para ese subconjunto (vueltas atendidas)."""
     inst = getattr(sch_or_inst, "instance", sch_or_inst)
-    pmins = [profile.min_travel_time(j.base, j.r, j.d) for j in inst.jobs]
+    jobs = inst.jobs if job_ids is None else [inst.job(x) for x in job_ids]
+    pmins = [profile.min_travel_time(j.base, j.r, j.d) for j in jobs]
     if not pmins:
         return 0.0
     return max(max(pmins), sum(pmins) / inst.m)
@@ -23,7 +25,12 @@ def compute_metrics(sch: Schedule, profile: TrafficProfile, lb: float | None = N
     total = sum(loads)
     lunch = inst.buses[0].lunch_dur if inst.buses else 120.0
     available = (inst.day_end - inst.day_start) - lunch          # 14 h netas
-    lb = lower_bound(inst, profile) if lb is None else lb
+    # La cota se evalúa sobre las vueltas ATENDIDAS: si quedan vueltas sin
+    # asignar, compararse contra la cota de todas daría brechas negativas.
+    if sch.unassigned:
+        lb = lower_bound(inst, profile, list(sch.assignments))
+    elif lb is None:
+        lb = lower_bound(inst, profile)
     base_total = sum(inst.job(a.job_id).base for a in sch.assignments.values())
     out = {
         "ruta": inst.route,
