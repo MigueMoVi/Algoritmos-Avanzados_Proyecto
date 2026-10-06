@@ -23,14 +23,8 @@ consultada, lo que aprendió, cómo lo aplicó y el commit o archivo que lo demu
 | N4 | Estructuras para huecos de tiempo (listas ordenadas, `bisect`, colas de prioridad) | Choque | Comparar lista+bisect vs árbol de intervalos; medir costo de inserción | Cormen et al. (2022), documentación de `bisect`/`heapq` | `BusTimeline`, experimento E3 | S2 |
 | N5 | Ramificación y poda: diseño de cotas y ruptura de simetrías | Huacani | Leer Land y Doig (1960) y apuntes del curso; implementar cota Σpmin/m y poda por buses equivalentes | Land y Doig (1960); material del curso | `bnb.py`, conteo de nodos/podas | S1–S2 |
 | N6 | Diseño de pruebas (pytest): casos límite y adversos | Huacani | Guía de pytest; catálogo de casos límite del problema | Documentación de pytest | `tests/` (35 pruebas) | S1 |
-| N7 | Manejo de datos y control de calidad con pandas/openpyxl | Moreano | Revisar consistencia entre hojas; detectar el desplazamiento de RTU-28/29 | Documentación de pandas y openpyxl | `builder.py` (corrección), Excel actualizado | S1 |
+| N7 | Manejo de datos y control de calidad con pandas/openpyxl | Moreano | Verificar la consistencia entre hojas y validar ventanas y duraciones | Documentación de pandas y openpyxl | `builder.py` (`check_instance`), Excel actualizado | S1 |
 | N8 | Simulación Monte Carlo y medidas de robustez | Moreano | Leer Law (2015, caps. 4 y 9); replicaciones con semilla; percentil 95 | Law (2015) | `simulation.py`, experimento E4 | S2 |
 | N9 | Visualización reproducible (matplotlib) y paleta accesible | Moreano | Diseñar Gantt y gráficos de escenarios; validar paleta | Documentación de matplotlib | `viz.py`, figuras en `results/` | S2 |
 
-S1 = 6–12 oct 2026 · S2 = 13–26 oct 2026 (hacia la Entrega 2).
-
-## Necesidades previstas para las entregas 2 y 3
-
-* Búsqueda local (intercambio/reubicación de vueltas) para mejorar las soluciones de LS y LPT.
-* Calibración del perfil de tráfico con observaciones propias (tiempos medidos en campo o datos abiertos de GPS, si se consiguen).
-* Análisis estadístico de las comparaciones (pruebas pareadas, por ejemplo Wilcoxon).
+S1 = 6–12 oct 2026 · S2 = 13–26 oct 2026.

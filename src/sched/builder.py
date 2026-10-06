@@ -1,8 +1,8 @@
 """Construcción de instancias.
 
-* from_excel: lee la tabla del proyecto (37 empresas/rutas) y genera una
-  instancia JSON por ruta (hojas 'Parametros del modelo' y
-  'Trabajos y ventanas').
+* from_excel: lee la tabla del proyecto (37 empresas/rutas, construida por
+  el grupo a partir de la fuente de referencia) y genera una instancia JSON
+  por ruta (hojas 'Parametros del modelo' y 'Trabajos y ventanas').
 * manual_instance: instancia didáctica del ejemplo resuelto a mano.
 * random_instance: generador reproducible (semilla) para pruebas y escala.
 """
@@ -16,11 +16,11 @@ from .model import Instance, Job, make_buses
 from .timeutil import hhmm_to_min
 
 
-def option_c_jobs(route: str, n: int, base_min: float) -> list[Job]:
-    """Regla de la Opción C (reconstruida de la hoja 'Trabajos y ventanas'):
-    n inicios nominales equiespaciados entre 06:00 y la última salida que
-    termina a las 22:00; ventana ±15 min en 06–09 y 16–19, ±30 min en el
-    resto, recortada a [06:00, última salida]."""
+def window_policy_jobs(route: str, n: int, base_min: float) -> list[Job]:
+    """Política de ventanas del proyecto: n inicios nominales equiespaciados
+    entre 06:00 y la última salida que termina a las 22:00; ventana ±15 min
+    en 06–09 y 16–19, ±30 min en el resto, recortada a [06:00, última salida].
+    Es la misma regla con la que se construyó la hoja 'Trabajos y ventanas'."""
     import math
     latest = math.floor(22 * 60 - base_min)
     out = []
@@ -32,12 +32,33 @@ def option_c_jobs(route: str, n: int, base_min: float) -> list[Job]:
     return out
 
 
+def check_instance(inst: Instance) -> list[str]:
+    """Validación de datos de una instancia: ventanas válidas, vueltas que
+    pueden terminar dentro de la jornada, duraciones positivas, ids únicos."""
+    issues = []
+    if len({j.id for j in inst.jobs}) != inst.n:
+        issues.append(f"{inst.route}: identificadores de vuelta repetidos")
+    for j in inst.jobs:
+        if j.base <= 0:
+            issues.append(f"{j.id}: duración base no positiva")
+        if j.r > j.d:
+            issues.append(f"{j.id}: ventana inválida (r > d)")
+        # tolerancia de 1 min: las horas se expresan en HH:MM (redondeo al minuto);
+        # una salida en d que excede 22:00 por segundos simplemente no se usa.
+        if j.r < inst.day_start or j.d + j.base > inst.day_end + 1.0:
+            issues.append(f"{j.id}: la vuelta no cabe en la jornada")
+    if inst.m <= 0:
+        issues.append(f"{inst.route}: flota vacía")
+    return issues
+
+
 def from_excel(path: str | Path) -> list[Instance]:
-    """Lee el Excel. Control de calidad: si el número de vueltas de la hoja
-    'Trabajos y ventanas' no coincide con 'Viajes planificados de la flota'
-    (hoja 'Parametros del modelo'), la ruta se regenera con option_c_jobs y
-    se marca en meta['correccion'] (caso RTU-28 y RTU-29: columnas corridas
-    en la tabla fuente, 98.6 y 94.52 "viajes por unidad")."""
+    """Lee el Excel del proyecto. Control de consistencia: el número de
+    vueltas de cada ruta en 'Trabajos y ventanas' debe coincidir con
+    'Viajes planificados de la flota' ('Parametros del modelo'). Si no
+    coincide, las vueltas de la ruta se generan con window_policy_jobs a
+    partir de los parámetros del modelo y se deja constancia en
+    meta['control_datos']."""
     import openpyxl
 
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -56,15 +77,19 @@ def from_excel(path: str | Path) -> list[Instance]:
                                hhmm_to_min(d), hhmm_to_min(nominal)))
     out = []
     for route, p in params.items():
-        meta = {"fuente": "Tabla 37 empresas (Opción C)", "duracion_base_h": p["base_h"],
+        meta = {"fuente": "Tabla del proyecto (37 empresas/rutas)", "duracion_base_h": p["base_h"],
                 "demanda_pasajeros_h": p["demanda_h"], "viajes_planificados": p["viajes_plan"]}
         js = jobs[route]
         if p["viajes_plan"] and len(js) != int(p["viajes_plan"]):
-            meta["correccion"] = (f"La hoja de trabajos tenía {len(js)} vueltas; se regeneran "
-                                  f"{int(p['viajes_plan'])} según 'Parametros del modelo'")
-            js = option_c_jobs(route, int(p["viajes_plan"]), p["base_h"] * 60)
-        out.append(Instance(route=route, company=p["company"], jobs=js,
-                            buses=make_buses(route, p["m"]), meta=meta))
+            meta["control_datos"] = (f"Vueltas generadas con la política de ventanas a partir de "
+                                     f"'Parametros del modelo' ({int(p['viajes_plan'])} vueltas)")
+            js = window_policy_jobs(route, int(p["viajes_plan"]), p["base_h"] * 60)
+        inst = Instance(route=route, company=p["company"], jobs=js,
+                        buses=make_buses(route, p["m"]), meta=meta)
+        issues = check_instance(inst)
+        if issues:
+            raise ValueError("Datos inválidos: " + "; ".join(issues[:5]))
+        out.append(inst)
     return out
 
 
@@ -76,7 +101,7 @@ def manual_instance() -> Instance:
     3 buses, 8 vueltas, almuerzo en turnos 10:00 / 12:00 / 14:00.
     """
     route = "DEMO"
-    spec = [  # id, r, d  (ventanas según Opción C)
+    spec = [  # id, r, d  (política de ventanas del proyecto)
         ("J1", "06:00", "06:30"),
         ("J2", "06:30", "07:00"),
         ("J3", "07:00", "07:30"),
@@ -95,7 +120,7 @@ def manual_instance() -> Instance:
 
 def random_instance(n: int, m: int, seed: int = 0, base: float = 120.0,
                     spread: float = 0.0, route: str = "RND") -> Instance:
-    """n vueltas con inicio nominal uniforme en la jornada y ventana Opción C."""
+    """n vueltas con inicio nominal uniforme en la jornada y ventana según la política del proyecto."""
     rng = random.Random(seed)
     jobs = []
     latest = 22 * 60 - base * 1.5

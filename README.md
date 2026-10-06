@@ -40,9 +40,9 @@ python -m sched build                                   # Excel -> data/instance
 python -m sched profiles                                # perfiles de tráfico T0 / T1 / T2
 python -m sched demo --traffic T2                       # ejemplo manual: LS, LPT, B&B y CP-SAT
 python -m sched run --route RTI-01 --alg ls --traffic T1 --gantt
-python -m sched run --route RTI-01 --alg lpt --traffic T2 --policy min_duration
+python -m sched run --route RTI-01 --alg lpt --traffic T2
 python -m sched run --instance mi_instancia.json --alg bnb --traffic T0
-python -m sched simulate --route RTI-01 --alg ls --traffic T1 --sigma 0.2 --buffer 0.1
+python -m sched simulate --route RTI-01 --alg ls --traffic T1 --sigma 0.2
 python -m pytest -q                                     # 35 pruebas
 python experiments/run_experiments.py                   # E1–E4 (≈ 3–4 min) -> results/
 python experiments/build_excel.py                       # Excel actualizado -> results/
@@ -59,7 +59,7 @@ src/sched/
   model.py        Job, Bus, Instance, BusTimeline (huecos + almuerzo flexible), Schedule
   builder.py      Excel -> instancias; instancia manual; generador aleatorio con semilla
   algorithms/
-    greedy.py     List Scheduling (LS) y LPT adaptados (+ variante best-fit)
+    greedy.py     List Scheduling (LS) y LPT adaptados
     bnb.py        Ramificación y poda (exacto en instancias pequeñas)
     cpsat.py      Modelo exacto de referencia con OR-Tools CP-SAT
   validator.py    verificación independiente de todas las restricciones
@@ -69,7 +69,7 @@ src/sched/
   cli.py          interfaz de línea de comandos (python -m sched ...)
 tests/            pytest: casos básicos, límite, adversos y de escala
 experiments/      run_experiments.py (E1–E4) y build_excel.py
-data/raw/         Excel fuente (37 empresas, Opción C)
+data/raw/         Excel del proyecto (37 empresas/rutas)
 data/instances/   instancias JSON generadas (una por ruta + DEMO)
 data/traffic/     perfiles de tráfico en JSON (editables)
 results/          CSV, figuras y Excel actualizado
@@ -101,8 +101,11 @@ duración con tráfico y duración base; las vueltas no asignadas aparecen con `
 
 ## Notas sobre los datos
 
-* Fuente referencial: *Tabla de datos — Unidades de transporte — Flota operativa 2020*.
-* **Corrección:** en RTU-28 y RTU-29 la hoja *Tabla proyecto* tiene columnas desplazadas
-  (98.6 y 94.52 "viajes por unidad"), lo que generaba 3057 y 2836 vueltas. El constructor
-  detecta la discrepancia con *Parametros del modelo* y regenera 145 y 139 vueltas con la misma
-  regla de la Opción C.
+| Tipo | Contenido |
+|---|---|
+| Datos de la fuente de referencia | Flota operativa, tiempo de vuelta, demanda y viajes por unidad vehicular de las 37 empresas/rutas (*Tabla de datos — Unidades de transporte — Flota operativa 2020*). |
+| Parámetros construidos por el grupo | Excel del proyecto, número de vueltas planificadas (flota × viajes por unidad), inicios nominales e instancias JSON. |
+| Supuestos experimentales | Ventanas de inicio (±15 min en 06–09 y 16–19; ±30 min en el resto), jornada 06:00–22:00, almuerzo de 2 h en tres turnos con ventana de ±30 min, perfiles de tráfico T0/T1/T2 y variabilidad σ. |
+
+El constructor verifica que el número de vueltas de cada ruta coincida con las vueltas
+planificadas, que toda ventana sea válida (r ≤ d) y que toda vuelta pueda terminar antes de las 22:00.

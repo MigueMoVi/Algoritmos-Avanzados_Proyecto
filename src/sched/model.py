@@ -192,21 +192,19 @@ class BusTimeline:
                 return ls
         return None
 
-    def find_slot(self, job: Job, duration: Callable[[float], float],
-                  policy: str = "earliest", step: float = 1.0):
-        """Devuelve (inicio, fin) factible o None.
+    def find_slot(self, job: Job, duration: Callable[[float], float]):
+        """Devuelve (inicio, fin) con el inicio factible más temprano, o None.
 
-        policy = "earliest"      -> inicio factible más temprano.
-        policy = "min_duration"  -> dentro del primer hueco factible, el inicio
-                                    que minimiza la duración (consciente del
-                                    tráfico); empate -> el más temprano.
+        En cada hueco se prueban dos candidatos: salir lo antes posible, o
+        salir justo después de ubicar el almuerzo en ese mismo hueco. Un
+        candidato se acepta sólo si respeta ventana y jornada y si el almuerzo
+        todavía cabe (invariante de factibilidad).
         """
         b = self.bus
         for g0, g1 in self.gaps():
             s0 = max(job.r, g0)
             if s0 > job.d + EPS:
                 return None                 # los huecos siguientes son más tardíos
-            # candidatos: lo antes posible, o justo después de almorzar en este hueco
             cands = [s0]
             ls = max(g0, b.lunch_r)
             if ls <= b.lunch_d + EPS:
@@ -217,21 +215,8 @@ class BusTimeline:
                 e = s + duration(s)
                 if e > g1 + EPS:
                     break                   # FIFO: más tarde tampoco cabe
-                if self._lunch_fits((s, e)) is None:
-                    continue
-                if policy == "earliest":
+                if self._lunch_fits((s, e)) is not None:
                     return s, e
-                best = (e - s, s, e)
-                t = s + step
-                last = min(job.d, g1)
-                while t <= last + EPS:
-                    dt = duration(t)
-                    if t + dt > g1 + EPS:
-                        break
-                    if dt < best[0] - EPS and self._lunch_fits((t, t + dt)) is not None:
-                        best = (dt, t, t + dt)
-                    t += step
-                return best[1], best[2]
         return None
 
     def insert(self, start: float, end: float, tag: str) -> None:
@@ -259,8 +244,6 @@ class Schedule:
     instance: Instance
     algorithm: str
     traffic: str
-    policy: str = "earliest"
-    buffer: float = 0.0
     assignments: dict[str, Assignment] = field(default_factory=dict)
     unassigned: list[str] = field(default_factory=list)
     runtime_s: float = 0.0

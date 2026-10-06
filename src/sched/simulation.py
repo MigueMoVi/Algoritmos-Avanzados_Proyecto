@@ -71,7 +71,7 @@ def simulate(sch: Schedule, profile: TrafficProfile, sigma: float, reps: int = 2
         return statistics.fmean(xs), xs[int(0.95 * (len(xs) - 1))]
 
     out = {"ruta": inst.route, "algoritmo": sch.algorithm, "trafico": sch.traffic,
-           "holgura": sch.buffer, "sigma": sigma, "replicas": reps}
+           "sigma": sigma, "replicas": reps}
     for name, xs in (("vueltas_fuera_ventana_pct", late_pct), ("retraso_medio_min", mean_delay),
                      ("retraso_max_min", max_delay), ("buses_horas_extra_pct", overtime_pct),
                      ("Lmax_real_h", lmax_real)):

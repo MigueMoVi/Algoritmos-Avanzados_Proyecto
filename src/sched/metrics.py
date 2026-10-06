@@ -36,8 +36,6 @@ def compute_metrics(sch: Schedule, profile: TrafficProfile, lb: float | None = N
         "ruta": inst.route,
         "algoritmo": sch.algorithm,
         "trafico": sch.traffic,
-        "politica": sch.policy,
-        "holgura": sch.buffer,
         "buses": inst.m,
         "trabajos": inst.n,
         "asignados": len(sch.assignments),

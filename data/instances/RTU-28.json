@@ -4,11 +4,11 @@
  "day_start": "06:00",
  "day_end": "22:00",
  "meta": {
-  "fuente": "Tabla 37 empresas (Opción C)",
+  "fuente": "Tabla del proyecto (37 empresas/rutas)",
   "duracion_base_h": 2.07,
   "demanda_pasajeros_h": 690.2,
   "viajes_planificados": 145,
-  "correccion": "La hoja de trabajos tenía 3057 vueltas; se regeneran 145 según 'Parametros del modelo'"
+  "control_datos": "Vueltas generadas con la política de ventanas a partir de 'Parametros del modelo' (145 vueltas)"
  },
  "buses": [
   {

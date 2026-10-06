@@ -180,7 +180,7 @@ def get_profile(name: str) -> TrafficProfile:
     name = name.upper()
     if name == "T0":
         return TrafficProfile(name="T0", bands=[], outside_factor=1.0,
-                              description="Sin tráfico: duración constante (Avance 1)")
+                              description="Sin tráfico: duración constante igual al tiempo base")
     if name == "T2":
         return _raw()
     if name == "T1":

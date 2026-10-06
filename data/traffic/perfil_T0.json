@@ -1,6 +1,6 @@
 {
   "name": "T0",
-  "description": "Sin tráfico: duración constante (Avance 1)",
+  "description": "Sin tráfico: duración constante igual al tiempo base",
   "outside_factor": 1.0,
   "bands": []
 }

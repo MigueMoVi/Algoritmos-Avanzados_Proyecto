@@ -4,7 +4,7 @@
  "day_start": "06:00",
  "day_end": "22:00",
  "meta": {
-  "fuente": "Tabla 37 empresas (Opción C)",
+  "fuente": "Tabla del proyecto (37 empresas/rutas)",
   "duracion_base_h": 1.97,
   "demanda_pasajeros_h": 792,
   "viajes_planificados": 154

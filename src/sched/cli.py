@@ -4,7 +4,7 @@
     python -m sched demo --traffic T2           # ejemplo manual (LS, LPT, BnB, CP-SAT)
     python -m sched run --route RTI-01 --alg lpt --traffic T1 [--gantt]
     python -m sched run --instance mi.json --alg ls
-    python -m sched simulate --route RTI-01 --alg ls --traffic T1 --sigma 0.1
+    python -m sched simulate --route RTI-01 --alg ls --traffic T1 --sigma 0.2
     python -m sched profiles                    # muestra los perfiles T0/T1/T2
 """
 
@@ -41,13 +41,13 @@ def _load_instance(args) -> Instance:
     return Instance.load(p)
 
 
-def _solve(inst, alg, profile, policy="earliest", buffer=0.0):
+def _solve(inst, alg, profile):
     if alg == "bnb":
         return branch_and_bound(inst, profile)
     if alg == "cpsat":
         from .algorithms.cpsat import cpsat_solve
         return cpsat_solve(inst, profile)
-    return ALGORITHMS[alg](inst, profile, policy=policy, buffer=buffer)
+    return ALGORITHMS[alg](inst, profile)
 
 
 def _write_csv(rows, path):
@@ -84,7 +84,7 @@ def cmd_build(args) -> None:
 def cmd_run(args) -> None:
     inst = _load_instance(args)
     profile = get_profile(args.traffic)
-    sch = _solve(inst, args.alg, profile, args.policy, args.buffer)
+    sch = _solve(inst, args.alg, profile)
     errors = validate(sch, profile)
     m = compute_metrics(sch, profile)
     print(f"{inst.route} ({inst.company}) · {inst.m} buses · {inst.n} vueltas · "
@@ -127,7 +127,7 @@ def cmd_demo(args) -> None:
 def cmd_simulate(args) -> None:
     inst = _load_instance(args)
     profile = get_profile(args.traffic)
-    sch = _solve(inst, args.alg, profile, args.policy, args.buffer)
+    sch = _solve(inst, args.alg, profile)
     res = simulate(sch, profile, args.sigma, args.reps, args.seed)
     print(json.dumps(res, indent=2, ensure_ascii=False))
 
@@ -156,8 +156,6 @@ def main(argv=None) -> None:
         g.add_argument("--instance", help="ruta a un archivo JSON de instancia")
         p.add_argument("--alg", choices=["ls", "lpt", "bnb", "cpsat"], default="ls")
         p.add_argument("--traffic", default="T1", help="T0 | T1 | T2 | archivo.json")
-        p.add_argument("--policy", choices=["earliest", "min_duration"], default="earliest")
-        p.add_argument("--buffer", type=float, default=0.0, help="holgura relativa (0.10 = 10 %%)")
 
     r = sub.add_parser("run", help="resolver una instancia")
     common(r)

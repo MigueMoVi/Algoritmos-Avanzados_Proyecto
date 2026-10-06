@@ -32,7 +32,6 @@ def validate(sch: Schedule, profile: TrafficProfile) -> list[str]:
         if extra:
             errors.append(f"Trabajos desconocidos: {sorted(extra)[:5]}")
 
-    k = 1.0 + sch.buffer
     for a in sch.assignments.values():
         if a.job_id not in job_ids:
             continue
@@ -48,7 +47,7 @@ def validate(sch: Schedule, profile: TrafficProfile) -> list[str]:
         if a.start < inst.day_start - TOL or a.end > inst.day_end + TOL:
             errors.append(f"{a.job_id}: fuera de jornada ({a.start:.1f}–{a.end:.1f})")
         # 5. duración coherente con el modelo de tráfico
-        expected = profile.travel_time(a.start, j.base) * k
+        expected = profile.travel_time(a.start, j.base)
         if abs(a.duration - expected) > 1e-3:
             errors.append(f"{a.job_id}: duración {a.duration:.3f} ≠ esperada {expected:.3f}")
 

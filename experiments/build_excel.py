@@ -76,7 +76,7 @@ def sheet_trabajos(wb, insts):
     by = {i.route: i for i in insts}
     for route in orig:
         inst = by[route]
-        if "correccion" in inst.meta:
+        if "control_datos" in inst.meta:
             for j in inst.jobs:
                 nom = j.nominal
                 per = ("06:00–09:00" if nom < 540 else "09:00–16:00" if nom < 960
@@ -85,17 +85,17 @@ def sheet_trabajos(wb, insts):
                         round(j.base / 60, 2), per, min_to_hhmm(nom), min_to_hhmm(j.r),
                         min_to_hhmm(j.d), int(round(j.d - j.r)),
                         "06:00–22:00 (2 h almuerzo escalonado)",
-                        "CORREGIDO Entrega 1: regenerado con la regla Opción C a partir de "
-                        "'Viajes planificados' (la versión anterior usaba un valor desplazado de la fuente)"]
+                        "Ventana experimental según la política de ventanas del proyecto; "
+                        "vueltas generadas a partir de 'Parametros del modelo'"]
                 for k, v in enumerate(vals):
                     c = ws.cell(row=r, column=k + 1, value=v)
                     c._style = copy(styles[k])
-                    if k == 11:
-                        c.fill = FLAG
                 r += 1
         else:
             for row in orig[route]:
                 for k, v in enumerate(row):
+                    if k == 11 and isinstance(v, str):
+                        v = v.replace("según Opción C", "según la política de ventanas del proyecto")
                     ws.cell(row=r, column=k + 1, value=v)._style = copy(styles[k])
                 r += 1
     ws.auto_filter.ref = f"A1:{get_column_letter(len(hdr))}{r - 1}"
@@ -108,10 +108,9 @@ def flag_source(wb):
             for idx in (9, 10, 11):          # demanda/h, viajes por unidad, frecuencia requerida
                 row[idx].fill = FLAG
             row[10].comment = Comment(
-                "Valor anómalo (Entrega 1): las columnas Demanda_pasajeros_h, "
-                "Viajes_por_unidad_vehicular y Frecuencia_requerida aparecen desplazadas "
-                "respecto de la fuente. No se usa: el modelo toma 'Viajes planificados' de la "
-                "hoja 'Parametros del modelo' (145 y 139).", "Grupo 4")
+                "Control de datos: valor atípico frente al resto de rutas. El modelo no usa esta "
+                "celda; toma la demanda y los viajes planificados de la hoja "
+                "'Parametros del modelo' (145 y 139 vueltas).", "Grupo 4")
 
 
 # ====================================================================
@@ -327,7 +326,7 @@ def sheet_manual(wb):
 
 def sheet_resultados(wb):
     df = pd.read_csv(RES / "E1_37_rutas.csv")
-    d = df[df.politica == "earliest"]
+    d = df
     ws = wb.create_sheet("Resultados por ruta")
     ws["A1"] = "RESULTADOS PRELIMINARES POR RUTA (E1) – salida de experiments/run_experiments.py"
     ws["A1"].font = TITLE
@@ -368,11 +367,11 @@ def sheet_resumen(wb):
     ws["A1"].font = TITLE
     r = 3
     blocks = [
-        ("E1 · 37 rutas × algoritmo × escenario de tráfico × política de inicio", "E1_resumen.csv"),
+        ("E1 · 37 rutas × algoritmo × escenario de tráfico", "E1_resumen.csv"),
         ("E2 · Heurísticas vs exactos (B&B y CP-SAT), 45 instancias pequeñas por escenario",
          "E2_resumen.csv"),
         ("E3 · Escalabilidad (instancias sintéticas, m = n/3, perfil T1)", "E3_escalabilidad.csv"),
-        ("E4 · Robustez Monte Carlo (T1, 100 réplicas por ruta)", "E4_resumen.csv"),
+        ("E4 · Robustez ante tráfico variable, simulación Monte Carlo (T1, 100 réplicas por ruta)", "E4_resumen.csv"),
     ]
     for title, f in blocks:
         df = pd.read_csv(RES / f)
@@ -391,18 +390,23 @@ def sheet_resumen(wb):
 
 def notas(wb):
     ws = wb["Notas"]
+    for row in ws.iter_rows():
+        for c in row:
+            if c.value == "Opción C":
+                c.value = "Política de ventanas"
+    wb["Politica ventanas"]["A1"] = "POLÍTICA DE VENTANAS TEMPORALES"
     r = ws.max_row + 2
     rows = [
-        ("ENTREGA 1 – Cambios", ""),
-        ("Tráfico (observación del docente)",
+        ("MODELO DE LA ENTREGA 1", ""),
+        ("Tráfico",
          "La duración de cada vuelta depende de su hora de salida: p_j(s) se calcula integrando una "
          "velocidad constante por franja (hojas 'Perfil trafico' y 'Calculadora vuelta')."),
-        ("Escenarios", "T0 sin tráfico (Avance 1), T1 normalizado (media 1), T2 pesimista. "
-                       "Además, variabilidad estocástica LogNormal (σ = 0.10 y 0.20) en simulación."),
+        ("Escenarios", "T0 sin tráfico, T1 normalizado (media 1), T2 pesimista. Además, variabilidad "
+                       "estocástica LogNormal (σ = 0.10 y 0.20) en simulación. Son parámetros experimentales."),
         ("Almuerzo", "2 h por bus con ventana de inicio de ±30 min en 3 turnos (11:00, 12:30, 14:00)."),
-        ("Corrección de datos", "RTU-28 y RTU-29: 'Tabla proyecto' tiene columnas desplazadas (98.6 y "
-                                "94.52 viajes/unidad). La hoja de trabajos se regeneró con 145 y 139 vueltas."),
-        ("Objetivo", "Lexicográfico: 1) maximizar vueltas atendidas; 2) minimizar la carga máxima por bus L_max."),
+        ("Objetivo", "Lexicográfico: 1) maximizar vueltas atendidas; 2) minimizar la carga máxima de conducción L_max."),
+        ("Control de datos", "Se verifica que cada ruta tenga tantas vueltas como 'Viajes planificados de la flota', "
+                             "que toda ventana sea válida y que toda vuelta quepa en la jornada."),
         ("Saturación", "Hoja 'Saturacion flota': ρ > 1 indica que la flota no alcanza aunque no haya tráfico."),
     ]
     for a, b in rows:

@@ -3,10 +3,10 @@
     python experiments/run_experiments.py            # todo (≈ 2–4 min)
     python experiments/run_experiments.py --quick    # versión corta
 
-E1  37 rutas × {LS, LPT} × {T0, T1, T2} × {earliest, min_duration}
+E1  37 rutas × {LS, LPT} × {T0, T1, T2}
 E2  heurísticas vs exactos (B&B propio y CP-SAT) en instancias pequeñas
 E3  escalabilidad: tiempo de ejecución vs número de vueltas
-E4  robustez Monte Carlo: σ ∈ {0.10, 0.20}, holgura ∈ {0, 0.10}, perfil T1
+E4  robustez Monte Carlo: σ ∈ {0.10, 0.20}, perfil T1
 Salidas: results/*.csv y results/fig_*.png
 """
 
@@ -61,17 +61,16 @@ def e1(insts):
         prof = get_profile(tname)
         for inst in insts:
             lbs[inst.route, tname] = lower_bound(inst, prof)
-            for pol in ("earliest", "min_duration"):
-                for name, alg in ALGS.items():
-                    s = alg(inst, prof, policy=pol)
-                    errs = validate(s, prof)
-                    m = compute_metrics(s, prof, lbs[inst.route, tname])
-                    m["violaciones"] = len(errs)
-                    rows.append(m)
+            for name, alg in ALGS.items():
+                s = alg(inst, prof)
+                errs = validate(s, prof)
+                m = compute_metrics(s, prof, lbs[inst.route, tname])
+                m["violaciones"] = len(errs)
+                rows.append(m)
     df = pd.DataFrame(rows)
     df.to_csv(RES / "E1_37_rutas.csv", index=False, float_format="%.4f")
 
-    agg = (df.groupby(["trafico", "politica", "algoritmo"])
+    agg = (df.groupby(["trafico", "algoritmo"])
              .agg(rutas=("ruta", "count"), vueltas=("trabajos", "sum"),
                   no_asignadas=("no_asignados", "sum"),
                   rutas_completas=("no_asignados", lambda x: int((x == 0).sum())),
@@ -86,7 +85,7 @@ def e1(insts):
 
 
 def fig_e1(df):
-    d = df[df.politica == "earliest"]
+    d = df
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.4))
     scen = ["T0", "T1", "T2"]
     x = range(len(scen))
@@ -196,15 +195,14 @@ def e4(insts, quick):
     rows = []
     for inst in insts:
         for name, alg in ALGS.items():
-            for buf in (0.0, 0.10):
-                s = alg(inst, prof, buffer=buf)
-                for sigma in (0.10, 0.20):
-                    r = simulate(s, prof, sigma, reps, seed=2026)
-                    r["no_asignados_plan"] = len(s.unassigned)
-                    rows.append(r)
+            s = alg(inst, prof)
+            for sigma in (0.10, 0.20):
+                r = simulate(s, prof, sigma, reps, seed=2026)
+                r["no_asignados_plan"] = len(s.unassigned)
+                rows.append(r)
     df = pd.DataFrame(rows)
     df.to_csv(RES / "E4_montecarlo.csv", index=False, float_format="%.4f")
-    agg = (df.groupby(["algoritmo", "holgura", "sigma"])
+    agg = (df.groupby(["algoritmo", "sigma"])
              .agg(fuera_ventana_pct=("vueltas_fuera_ventana_pct", "mean"),
                   fuera_ventana_p95=("vueltas_fuera_ventana_pct_p95", "mean"),
                   retraso_medio_min=("retraso_medio_min", "mean"),
@@ -213,20 +211,18 @@ def e4(insts, quick):
              .reset_index())
     agg.to_csv(RES / "E4_resumen.csv", index=False, float_format="%.3f")
 
-    fig, ax = plt.subplots(figsize=(6.4, 3.4))
-    labels, vals, cols = [], [], []
-    for alg, col in (("LS", C_LS), ("LPT", C_LPT)):
-        for buf in (0.0, 0.10):
-            for sg in (0.10, 0.20):
-                v = agg[(agg.algoritmo == alg) & (agg.holgura == buf) & (agg.sigma == sg)]
-                labels.append(f"{alg}\nh={int(buf * 100)}% σ={sg:.2f}")
-                vals.append(float(v.fuera_ventana_pct.iloc[0]))
-                cols.append(col)
-    ax.bar(range(len(vals)), vals, 0.7, color=cols)
-    for i, v in enumerate(vals):
-        ax.text(i, v, f"{v:.1f}", ha="center", va="bottom", fontsize=8, color=INK)
-    ax.set_xticks(range(len(vals)))
-    ax.set_xticklabels(labels, fontsize=7)
+    fig, ax = plt.subplots(figsize=(5.6, 3.2))
+    w = 0.36
+    for k, (alg, col) in enumerate((("LS", C_LS), ("LPT", C_LPT))):
+        vals = [float(agg[(agg.algoritmo == alg) & (agg.sigma == sg)].fuera_ventana_pct.iloc[0])
+                for sg in (0.10, 0.20)]
+        xs = [i + (k - 0.5) * w for i in range(2)]
+        ax.bar(xs, vals, w - 0.03, color=col, label=alg)
+        for xi, v in zip(xs, vals):
+            ax.text(xi, v, f"{v:.1f}", ha="center", va="bottom", fontsize=8, color=INK)
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["σ = 0.10", "σ = 0.20"])
+    ax.legend(frameon=False)
     ax.set_ylabel("% vueltas que salen fuera de ventana")
     ax.set_title("Robustez ante variabilidad del tráfico (T1, 37 rutas)", loc="left", fontsize=10)
     ax.grid(axis="y", color=GRID)
