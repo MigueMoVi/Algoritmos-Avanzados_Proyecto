@@ -6,7 +6,7 @@
 \usepackage[spanish,es-noquoting,es-tabla,es-nodecimaldot]{babel}
 \usepackage{lmodern}
 \usepackage{microtype}
-\usepackage[a4paper,margin=2.5cm,headheight=14pt]{geometry}
+\usepackage[a4paper,margin=2.5cm,headheight=22pt]{geometry}
 
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
@@ -84,20 +84,13 @@
   arc=0pt,left=6pt,right=6pt,top=4pt,bottom=4pt,fontupper=\small,#1}
 
 % ---------------------------------------------------------------- capturas
-% \captura[alto]{archivo}{pie de figura}{etiqueta}
-% Si existe capturas/<archivo> se inserta la imagen; si no, se dibuja un
-% recuadro reservado con el nombre esperado del archivo.
-\newcommand{\captura}[4][6cm]{%
+% \captura[ancho]{archivo}{pie de figura}{etiqueta}
+% Inserta una captura de pantalla de capturas/ con borde fino.
+\newcommand{\captura}[4][0.92\textwidth]{%
   \begin{figure}[H]
   \centering
-  \IfFileExists{capturas/#2}{%
-    \includegraphics[width=0.92\textwidth,height=#1,keepaspectratio]{capturas/#2}%
-  }{%
-    \fcolorbox{gray!60}{gray!5}{\parbox[c][#1][c]{0.9\textwidth}{\centering
-      {\color{gray}\large Espacio para captura}\\[6pt]
-      {\color{gray}\small #3}\\[8pt]
-      {\color{gray}\footnotesize Guardar la imagen como \texttt{capturas/\detokenize{#2}}}}}%
-  }
+  {\setlength{\fboxsep}{0pt}\fcolorbox{gray!50}{white}{%
+    \includegraphics[width=#1,height=9cm,keepaspectratio]{capturas/#2}}}
   \caption{#3}\label{#4}
   \end{figure}}
 

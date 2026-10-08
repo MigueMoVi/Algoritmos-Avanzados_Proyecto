@@ -35,7 +35,7 @@ J8 & 90 & 17:00--17:30 & 121.5 & 121.5 & 121.5 \\
 \textbf{\color{guinda}Verificación.} La hoja \emph{Calculadora vuelta} del Excel reproduce este cálculo con fórmulas (06:00, 90\,min, T2 $\to$ 103.67\,min) y coincide con el programa.
 \end{nota}
 
-\captura[5.5cm]{excel_calculadora_vuelta.png}{Hoja \emph{Calculadora vuelta} del Excel: cálculo de $p_{J1}(06{:}00)$ con el perfil T2.}{fig:cap-calculadora}
+\captura[0.8\textwidth]{excel_calculadora_vuelta.png}{Hoja \emph{Calculadora vuelta} del Excel: cálculo de $p_{J1}(06{:}00)$ con el perfil T2. La duración calculada con fórmulas (103.67\,min, llegada 07:43) coincide con \texttt{bus\_sched.traffic.travel\_time(360, 90)} = 103.6667.}{fig:cap-calculadora}
 
 \subsection{Asignación con List Scheduling}
 Orden de la lista: J1, J2, \dots, J8 (por inicio de ventana). En cada paso se muestran, para cada bus, la salida y llegada factibles y la carga previa (min).
@@ -133,6 +133,6 @@ Cota inferior $LB$ & & & & & 284.3 & --- \\
 
 Ambas estrategias atienden las 8 vueltas. Sin tráfico obtienen la misma carga máxima (270\,min, con 3 + 3 + 2 vueltas de 90\,min). Con tráfico, LS obtiene una carga máxima menor (329.0 frente a 333.2\,min). LPT toma primero las vueltas largas de la tarde y reparte las puntas sin seguir el orden temporal; al final, J6 solo cabe en B1 después de su almuerzo. Este resultado y la asignación de cada vuelta coinciden con la salida de \texttt{python -m bus\_sched demo --traffic T2} y con la hoja \emph{Instancia manual} del Excel.
 
-\captura[7cm]{demo_manual_T2.png}{Salida de \texttt{python -m bus\_sched demo --traffic T2} (instancia manual con LS y LPT).}{fig:cap-demo}
+\captura{demo_manual_T2.png}{Salida de \texttt{python -m bus\_sched demo --traffic T2}: ventanas, cota inferior (284.3\,min) y asignación de LS ($\Lmax = 329.0$\,min) y LPT ($\Lmax = 333.2$\,min), ambas validadas.}{fig:cap-demo}
 
-\captura[6cm]{excel_instancia_manual.png}{Hoja \emph{Instancia manual} del Excel con las asignaciones de LS y LPT.}{fig:cap-excel-manual}
+\captura{excel_instancia_manual.png}{Hoja \emph{Instancia manual} del Excel con las asignaciones de LS y LPT, las cargas por bus y la cota inferior $LB = 284.29$\,min.}{fig:cap-excel-manual}

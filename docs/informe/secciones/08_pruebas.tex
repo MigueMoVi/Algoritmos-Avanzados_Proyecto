@@ -37,7 +37,9 @@ Validación de restricciones & 400 vueltas y 60 buses & Solución válida; todas
 Validación de datos & Lectura del Excel del proyecto & 35 rutas, 4\,733 vueltas, coinciden con la regla general \\
 \end{longtable}}
 
-\captura[5cm]{pytest.png}{Ejecución de las pruebas automatizadas (\texttt{python -m pytest -q}).}{fig:cap-pytest}
+La suite completa (\texttt{tests/}) contiene 36 pruebas. En el equipo del grupo se aprobaron 35 y se omitió 1: la prueba del prototipo CP-SAT de \texttt{test\_referencia.py}, que solo se ejecuta si está instalado el paquete opcional \texttt{ortools}. Esa prueba corresponde a los mecanismos de referencia previstos para una etapa posterior y no afecta a LS ni a LPT.
+
+\captura{pytest.png}{Ejecución de las pruebas automatizadas (\texttt{python -m pytest -q}): 35 pruebas aprobadas y 1 omitida.}{fig:cap-pytest}
 
 \subsection{Verificación de las salidas}
 \begin{enumerate}
